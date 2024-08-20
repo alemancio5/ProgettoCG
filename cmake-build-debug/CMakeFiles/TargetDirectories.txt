@@ -1,0 +1,3 @@
+/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/cmake-build-debug/CMakeFiles/ProgettoCG.dir
+/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/cmake-build-debug/CMakeFiles/rebuild_cache.dir
