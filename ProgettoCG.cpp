@@ -1,16 +1,8 @@
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
 
-#define WIDTH 800
-#define HEIGHT 600
-
 // Uniform Buffer Object structs
 struct SphereMatrUBO {
-    alignas(16) glm::mat4 mvpMat;
-    alignas(16) glm::mat4 mMat;
-    alignas(16) glm::mat4 nMat;
-};
-struct PlaneMatrUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
@@ -29,29 +21,41 @@ protected:
     VertexDescriptor VD_Sphere;
     Pipeline P_Sphere;
     Model M_Sphere;
-    Texture T_Sphere;
+    Texture T_Sphere{};
     DescriptorSet DS_Sphere;
 
-    // Others
-    glm::vec3 CameraOffset = glm::vec3(0.0f, 2.0f, 5.0f);
-    glm::vec3 SpherePosition = glm::vec3(0.0f, 0.0f, 0.0f);  // Sphere at origin
-    glm::mat4 ViewMatrix;
-    float Ar;
+    // Sphere variables
+    glm::vec3 sphereDir = glm::vec3(0.0f);
+    glm::vec3 spherePos = glm::vec3(0.0f, 0.0f, 0.0f);
+    const float spherePosSpeed = 2.0f;
+    glm::vec3 sphereRot = glm::vec3(0.0f);
+    glm::mat4 sphereRotMatrix = glm::mat4(1.0f);
+    float sphereRotSpeed = glm::radians(90.0f);
+    glm::vec3 sphereRotAxis{};
+    float sphereRotAngle{};
+    glm::mat4 sphereProjectionMatrix{};
+    glm::mat4 sphereViewProjectionMatrix{};
 
-    void setWindowParameters() {
-        windowWidth = WIDTH;
-        windowHeight = HEIGHT;
+    // View variables
+    glm::mat4 viewMatrix{};
+    glm::vec3 viewPos{};
+    glm::vec3 viewOffset = glm::vec3(0.0f, 2.0f, 5.0f);
+    float Ar{};
+
+    void setWindowParameters() override {
+        windowWidth = 800;
+        windowHeight = 600;
         windowTitle = "Sun Golf";
         windowResizable = GLFW_TRUE;
-        initialBackgroundColor = {0.1f, 0.1f, 0.1f, 1.0f};
+        initialBackgroundColor = {0.1f, 0.3f, 0.1f, 1.0f};
         Ar = (float)windowWidth / (float)windowHeight;
     }
 
-    void onWindowResize(int w, int h) {
+    void onWindowResize(int w, int h) override {
         Ar = (float)w / (float)h;
     }
 
-    void localInit() {
+    void localInit() override {
         // Sphere
         DSL_Sphere.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMatrUBO), 1},
@@ -68,19 +72,19 @@ protected:
         T_Sphere.init(this, "textures/Sun.jpg");
 
         // Others
-        DPSZs.uniformBlocksInPool = 2;
-        DPSZs.texturesInPool = 2;
-        DPSZs.setsInPool = 2;
-        ViewMatrix = glm::translate(glm::mat4(1.0f), -CameraOffset);
+        DPSZs.uniformBlocksInPool = 1;
+        DPSZs.texturesInPool = 1;
+        DPSZs.setsInPool = 1;
+        viewMatrix = glm::translate(glm::mat4(1.0f), -viewOffset);
     }
 
-    void pipelinesAndDescriptorSetsInit() {
+    void pipelinesAndDescriptorSetsInit() override {
         // Sphere
         P_Sphere.create();
         DS_Sphere.init(this, &DSL_Sphere, {&T_Sphere});
     }
 
-    void localCleanup() {
+    void localCleanup() override {
         // Sphere
         DSL_Sphere.cleanup();
         VD_Sphere.cleanup();
@@ -93,13 +97,13 @@ protected:
         glfwTerminate();
     }
 
-    void pipelinesAndDescriptorSetsCleanup() {
+    void pipelinesAndDescriptorSetsCleanup() override {
         // Sphere
         P_Sphere.cleanup();
         DS_Sphere.cleanup();
     }
 
-    void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
+    void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
         // Sphere
         P_Sphere.bind(commandBuffer);
         M_Sphere.bind(commandBuffer);
@@ -107,65 +111,62 @@ protected:
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Sphere.indices.size()), 1, 0, 0, 0);
     }
 
-    void updateUniformBuffer(uint32_t currentImage) {
-        // Presets variables
-        static bool debounce = false;
-        static int curDebounce = 0;
-        float deltaT;
-        glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
-        bool fire = false;
-        getSixAxis(deltaT, m, r, fire);
+    void updateUniformBuffer(uint32_t currentImage) override {
+        // System variables initialization
+        float deltaTime;
+        auto movementInput = glm::vec3(0.0f);
+        auto rotationInput = glm::vec3(0.0f);
+        bool fireInput = false;
+        getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
 
-        // Time
-        static float autoTime = true;
-        static float cTime = 0.0;
-        const float turnTime = 72.0f;
-        const float angTurnTimeFact = 2.0f * M_PI / turnTime;
-        if(autoTime) {
-            cTime = cTime + deltaT;
-            cTime = (cTime > turnTime) ? (cTime - turnTime) : cTime;
-        }
-        static float tTime = 0.0;
-        const float tTurnTime = 60.0f;
-        const float tangTurnTimeFact = 1.0f / tTurnTime;
-        if(autoTime) {
-            tTime = tTime + deltaT;
-            tTime = (tTime > tTurnTime) ? (tTime - tTurnTime) : tTime;
-        }
-
-        // Update the view
-        const float ROT_SPEED = glm::radians(120.0f);
-        const float MOVE_SPEED = 2.0f;
-        ViewMatrix = glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT,glm::vec3(1, 0, 0)) * ViewMatrix;
-        ViewMatrix = glm::rotate(glm::mat4(1), ROT_SPEED * r.y * deltaT,glm::vec3(0, 1, 0)) * ViewMatrix;
-        ViewMatrix = glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT,glm::vec3(0, 0, 1)) * ViewMatrix;
-        ViewMatrix = glm::translate(glm::mat4(1), -glm::vec3(MOVE_SPEED * m.x * deltaT, MOVE_SPEED * m.y * deltaT, MOVE_SPEED * m.z * deltaT)) * ViewMatrix;
+        // Sphere variables initialization
+        sphereDir = glm::vec3(0.0f);
 
         // Update when keys pressed
         if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            sphereRot.x -= sphereRotSpeed * deltaTime;
+            sphereDir += glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            sphereDir += glm::vec3(0.0f, 0.0f, -1.0f);
+            sphereRot.x += sphereRotSpeed * deltaTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            sphereDir += glm::vec3(1.0f, 0.0f, 0.0f);
+            sphereRot.z += sphereRotSpeed * deltaTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            sphereDir += glm::vec3(-1.0f, 0.0f, 0.0f);
+            sphereRot.z -= sphereRotSpeed * deltaTime;
+        }
 
-        // Preset matrices
-        glm::vec3 cameraPosition = SpherePosition + CameraOffset;
+        // Sphere variables update
+        if (glm::length(sphereDir) > 0.0f) {
+            sphereDir = glm::normalize(sphereDir);
+            spherePos += sphereDir * spherePosSpeed * deltaTime;
+            sphereRotAxis = glm::cross(sphereDir, glm::vec3(0.0f, 1.0f, 0.0f));
+            sphereRotAngle = sphereRotSpeed * deltaTime;
+            sphereRotMatrix = glm::rotate(glm::mat4(1.0f), sphereRotAngle, sphereRotAxis) * sphereRotMatrix;
+        }
+        sphereProjectionMatrix = glm::perspective(glm::radians(75.0f), Ar, 0.1f, 160.0f);
+        sphereProjectionMatrix[1][1] *= -1;
+        sphereViewProjectionMatrix = sphereProjectionMatrix * viewMatrix;
 
-        // Set the view matrix to look from cameraPosition to the sphere position
-        ViewMatrix = glm::lookAt(cameraPosition, SpherePosition, glm::vec3(0.0f, 1.0f, 0.0f)); // Up direction is Y-axis
+        // View variables update
+        viewPos = spherePos + viewOffset;
+        viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
 
-        // Projection matrix (perspective projection)
-        glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), Ar, 0.1f, 160.0f);
-        projectionMatrix[1][1] *= -1; // Flip Y for Vulkan
-
-        // Combine projection and view matrices
-        glm::mat4 ViewPrj = projectionMatrix * ViewMatrix;
-
-
-        // Sphere
+        // Sphere UBO update
         SphereMatrUBO UBOm_Sphere{};
-        UBOm_Sphere.mvpMat = ViewPrj;
-        UBOm_Sphere.mMat = glm::mat4(1.0f);
+        UBOm_Sphere.mvpMat = sphereViewProjectionMatrix * glm::translate(glm::mat4(1.0f), spherePos) * sphereRotMatrix;
+        UBOm_Sphere.mMat = glm::translate(glm::mat4(1.0f), spherePos);
         UBOm_Sphere.nMat = glm::mat4(1.0f);
         DS_Sphere.map(currentImage, &UBOm_Sphere, 0);
+
+        std::cout << "Position: " << spherePos.x << " " << spherePos.y << " " << spherePos.z << std::endl;
     }
 };
 
