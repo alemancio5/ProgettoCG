@@ -45,6 +45,8 @@ protected:
     // Sphere variables
     const float sphereRadius = 1.0f;
     const float sphereAccel = 50.0f;
+    float sphereFriction = 0.95f;
+    glm::mat4 sphereMatrix = glm::mat4(1.0f);
     glm::vec3 spherePos = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -209,13 +211,9 @@ protected:
         sphereRotSpeed += sphereRotAccel * deltaTime;
         spherePos += spherePosSpeed * deltaTime;
         sphereRot += sphereRotSpeed * deltaTime;
-
-        // Friction to slow down over time
-        float friction = 0.95f;
-        spherePosSpeed *= friction;
-        sphereRotSpeed *= friction;
-
-        glm::mat4 sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::rotate(glm::mat4(1.0f), sphereRot.x, glm::vec3(1.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), sphereRot.z, glm::vec3(0.0f, 0.0f, 1.0f));
+        spherePosSpeed *= sphereFriction;
+        sphereRotSpeed *= sphereFriction;
+        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::rotate(glm::mat4(1.0f), sphereRot.x, glm::vec3(1.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), sphereRot.z, glm::vec3(0.0f, 0.0f, 1.0f));
 
         // View variables update
         viewPos = spherePos + viewOffset;
