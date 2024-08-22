@@ -21,9 +21,10 @@ struct SphereVertex {
 struct PlaneVertex {
     glm::vec3 pos;
     glm::vec2 uv;
+    glm::vec3 norm;
 };
 
-class SunGolf : public BaseProject {
+class NamelessGame : public BaseProject {
 protected:
     // Sphere
     DescriptorSetLayout DSL_Sphere;
@@ -65,7 +66,7 @@ protected:
     void setWindowParameters() override {
         windowWidth = 800;
         windowHeight = 600;
-        windowTitle = "Sun Golf";
+        windowTitle = "???";
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.1f, 0.3f, 0.1f, 1.0f};
         Ar = (float)windowWidth / (float)windowHeight;
@@ -101,7 +102,9 @@ protected:
             {0, sizeof(PlaneVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, pos), sizeof(glm::vec3), POSITION},
-            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(PlaneVertex, uv), sizeof(glm::vec2), UV}
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(PlaneVertex, uv), sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, norm), sizeof(glm::vec3), NORMAL},
+
         });
         P_Plane.init(this, &VD_Plane, "shaders/PlaneVert.spv", "shaders/PlaneFrag.spv", {&DSL_Plane});
         M_Plane.init(this, &VD_Plane, "models/Plane.obj", OBJ);
@@ -235,7 +238,7 @@ protected:
 
 
 int main() {
-    SunGolf app;
+    NamelessGame app;
 
     try {
         app.run();
