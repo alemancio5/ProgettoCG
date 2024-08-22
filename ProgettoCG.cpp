@@ -1,5 +1,12 @@
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
+glm::vec3 lastDir;
+float savedSpeed = 0.0f;
+float savedRotSpeed = 0.0f;
+float movementTimer = 0.0f;
+float stopTimer = 0.0f;
+bool isMoving = false;
+bool wasMoving = false;
 
 // Uniform Buffer Object structs
 struct SphereMatrUBO {
@@ -45,9 +52,17 @@ protected:
     // Sphere variables
     glm::vec3 sphereDir = glm::vec3(0.0f);
     glm::vec3 spherePos = glm::vec3(0.0f, 0.0f, 0.0f);
-    const float spherePosSpeed = 10.0f;
+    float spherePosSpeed = 0.0f;
+    float spherePosSpeedAccel = 0.0;
+    float spherePosSpeedDecel = 0.0;
+    const float spherePosAccel = 10.0f;
+    const float spherePosMaxSpeed = 40.0f;
+    const float sphereRotAccel = glm::radians(300.0f);
+    float sphereRotSpeedAccel = 0.0;
+    float sphereRotSpeedDecel = 0.0;
     glm::vec3 sphereRot = glm::vec3(0.0f);
     glm::mat4 sphereRotMatrix = glm::mat4(1.0f);
+
     float sphereRotSpeed = glm::radians(310.0f);
     glm::vec3 sphereRotAxis{};
     float sphereRotAngle{};
@@ -181,6 +196,8 @@ protected:
 
         // Sphere variables initialization
         sphereDir = glm::vec3(0.0f);
+        bool isKeyPressed = false;
+
 
         // Update when keys pressed
         if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -189,25 +206,88 @@ protected:
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
             sphereRot.x -= sphereRotSpeed * deltaTime;
             sphereDir += glm::vec3(0.0f, 0.0f, 1.0f);
+            lastDir = sphereDir;
+            isKeyPressed = true;
         }
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
             sphereDir += glm::vec3(0.0f, 0.0f, -1.0f);
+            lastDir = sphereDir;
             sphereRot.x += sphereRotSpeed * deltaTime;
+            isKeyPressed = true;
+
         }
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
             sphereDir += glm::vec3(1.0f, 0.0f, 0.0f);
+            lastDir = sphereDir;
             sphereRot.z += sphereRotSpeed * deltaTime;
+            isKeyPressed = true;
+
         }
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
             sphereDir += glm::vec3(-1.0f, 0.0f, 0.0f);
+            lastDir = sphereDir;
             sphereRot.z -= sphereRotSpeed * deltaTime;
+            isKeyPressed = true;
+
         }
 
+
+        // Timer logic
+        if (isKeyPressed) {
+            // Moving: Start or continue the movement timer
+            if (!isMoving) {
+
+                // Log stop duration and reset stop timer when movement starts
+                std::cout << "Stop duration: " << stopTimer << " seconds\n";
+                std::cout << "Speed: " << spherePosSpeed << " m/s\n";
+                std::cout << "Rotation speed: " << sphereRotSpeed << " rad/s\n";
+                stopTimer = 0.0f; // Reset stop timer
+                isMoving = true;
+            }
+
+            // Increment movement timer
+            movementTimer += deltaTime;
+            spherePosSpeedAccel = spherePosAccel * movementTimer;
+            sphereRotSpeedAccel = sphereRotAccel * movementTimer;
+        } else {
+            // Stopping: Start or continue the stop timer
+            if (isMoving) {
+
+
+                // Log movement duration and reset movement timer when stopping
+                std::cout << "Movement duration: " << movementTimer << " seconds\n";
+
+                std::cout << "Speed: " << spherePosSpeed << " m/s\n";
+                std::cout << "Rotation speed: " << sphereRotSpeed << " rad/s\n";
+                movementTimer = 0.0f; // Reset movement timer
+                savedSpeed = spherePosSpeed;
+                savedRotSpeed = sphereRotSpeed;
+                isMoving = false;
+            }
+
+            // Increment stop timer
+            stopTimer += deltaTime;
+
+            spherePosSpeedDecel = spherePosAccel * stopTimer;
+            sphereRotSpeedDecel = sphereRotAccel * stopTimer;
+            if (spherePosSpeedDecel > savedSpeed) {
+                spherePosSpeedDecel = 0.0f;
+                spherePosSpeedAccel = 0.0f;
+            }
+            if (sphereRotSpeedDecel > savedRotSpeed) {
+                sphereRotSpeedDecel = 0.0f;
+                sphereRotSpeedAccel = 0.0f;
+            }
+        }
+
+        spherePosSpeed = glm::clamp(spherePosSpeedAccel - spherePosSpeedDecel, 0.0f, spherePosMaxSpeed);
+        sphereRotSpeed = glm::clamp(sphereRotSpeedAccel - sphereRotSpeedDecel, 0.0f, 900.0f);
+
         // Sphere variables update
-        if (glm::length(sphereDir) > 0.0f) {
-            sphereDir = glm::normalize(sphereDir);
-            spherePos += -sphereDir * spherePosSpeed * deltaTime;
-            sphereRotAxis = glm::cross(sphereDir, glm::vec3(0.0f, 1.0f, 0.0f));
+        if (glm::length(lastDir) > 0.0f) {
+            lastDir = glm::normalize(lastDir);
+            spherePos += -lastDir * spherePosSpeed * deltaTime;
+            sphereRotAxis = glm::cross(lastDir, glm::vec3(0.0f, 1.0f, 0.0f));
             sphereRotAngle = sphereRotSpeed * deltaTime;
             sphereRotMatrix = glm::rotate(glm::mat4(1.0f), sphereRotAngle, sphereRotAxis) * sphereRotMatrix;
         }
