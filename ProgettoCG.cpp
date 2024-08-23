@@ -54,17 +54,17 @@ protected:
     glm::vec3 sphereRotSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotAccel = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    // Plane variables
-    glm::mat4 planeModelMatrix = glm::mat4(1.0f);
-
     // Projection variables
     glm::mat4 projectionMatrix{};
     glm::mat4 viewProjectionMatrix{};
 
     // View variables
+    const float viewDistance = 5.0f;
+    const float viewHeight = 3.0f;
+    const float viewSpeed = glm::radians(120.0f);
     glm::mat4 viewMatrix{};
     glm::vec3 viewPos{};
-    glm::vec3 viewOffset = glm::vec3(0.0f, 2.0f, 5.0f);
+    glm::vec3 viewOffset = glm::vec3(0.0f, 3.0f, 5.0f);
     float Ar{};
 
     void setWindowParameters() override {
@@ -176,48 +176,54 @@ protected:
     }
 
     void updateUniformBuffer(uint32_t currentImage) override {
-        // System variables initialization
+        // System inputs
         float deltaTime;
         auto movementInput = glm::vec3(0.0f);
         auto rotationInput = glm::vec3(0.0f);
         bool fireInput = false;
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
 
-        // Update when keys pressed
-        if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+        // Keyboard inputs
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            spherePosAccel.z = -sphereAccel;
-            sphereRotAccel.x = -sphereAccel;
-        } else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            spherePosAccel.z = sphereAccel;
-            sphereRotAccel.x = sphereAccel;
-        } else {
-            spherePosAccel.z = 0.0f;
-            sphereRotAccel.x = 0.0f;
-        }
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            spherePosAccel.x = -sphereAccel;
-            sphereRotAccel.z = sphereAccel;
-        } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            spherePosAccel.x = sphereAccel;
-            sphereRotAccel.z = -sphereAccel;
-        } else {
-            spherePosAccel.x = 0.0f;
-            sphereRotAccel.z = 0.0f;
-        }
-        spherePosSpeed += spherePosAccel * deltaTime;
-        sphereRotSpeed += sphereRotAccel * deltaTime;
-        spherePos += spherePosSpeed * deltaTime;
-        sphereRot += sphereRotSpeed * deltaTime;
-        spherePosSpeed *= sphereFriction;
-        sphereRotSpeed *= sphereFriction;
-        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::rotate(glm::mat4(1.0f), sphereRot.x, glm::vec3(1.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), sphereRot.z, glm::vec3(0.0f, 0.0f, 1.0f));
 
         // View variables update
-        viewPos = spherePos + viewOffset;
+        static float viewAzimuth = 0.0f;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            viewAzimuth += viewSpeed * deltaTime;
+        } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            viewAzimuth -= viewSpeed * deltaTime;
+        }
+        float x = spherePos.x + viewDistance * glm::sin(viewAzimuth);
+        float z = spherePos.z + viewDistance * glm::cos(viewAzimuth);
+        float y = spherePos.y + viewHeight;
+        viewPos = glm::vec3(x, y, z);
         viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::vec3 forwardDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), 0.0f, glm::cos(viewAzimuth)));
+
+        // Sphere variables update
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            spherePosAccel = -forwardDir * sphereAccel;
+        } else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            spherePosAccel = forwardDir * sphereAccel;
+        } else {
+            spherePosAccel = glm::vec3(0.0f);
+        }
+        spherePosSpeed += spherePosAccel * deltaTime;
+        spherePos += spherePosSpeed * deltaTime;
+        spherePosSpeed *= sphereFriction;
+        float sphereSpeed = glm::length(spherePosSpeed);
+        if (sphereSpeed > 0.0001f) {
+            float rotationAngle = sphereSpeed * deltaTime / sphereRadius;
+            glm::vec3 movementDir = glm::normalize(spherePosSpeed);
+            glm::vec3 rotationAxis = glm::cross(-movementDir, glm::vec3(0.0f, 1.0f, 0.0f));
+            sphereRot += rotationAxis * rotationAngle;
+        }
+        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) *
+                       glm::rotate(glm::mat4(1.0f), sphereRot.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
+                       glm::rotate(glm::mat4(1.0f), sphereRot.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
+                       glm::rotate(glm::mat4(1.0f), sphereRot.z, glm::vec3(0.0f, 0.0f, 1.0f));
 
         // Projection variables update
         projectionMatrix = glm::perspective(glm::radians(75.0f), Ar, 0.1f, 160.0f);
@@ -227,14 +233,14 @@ protected:
         // Sphere UBO update
         SphereMatrUBO UBOm_Sphere{};
         UBOm_Sphere.mvpMat = viewProjectionMatrix * sphereMatrix;
-        UBOm_Sphere.mMat = glm::translate(glm::mat4(1.0f), spherePos) * sphereMatrix;
+        UBOm_Sphere.mMat = sphereMatrix;
         UBOm_Sphere.nMat = glm::mat4(1.0f);
         DS_Sphere.map(currentImage, &UBOm_Sphere, 0);
 
         // Plane UBO update
         PlaneMatrUBO UBOm_Plane{};
-        UBOm_Plane.mvpMat = viewProjectionMatrix * planeModelMatrix;
-        UBOm_Plane.mMat = planeModelMatrix;
+        UBOm_Plane.mvpMat = viewProjectionMatrix;
+        UBOm_Plane.mMat = glm::mat4(1.0f);
         UBOm_Plane.nMat = glm::mat4(1.0f);
         DS_Plane.map(currentImage, &UBOm_Plane, 0);
     }
