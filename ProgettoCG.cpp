@@ -155,7 +155,6 @@ protected:
         DSL_Sphere.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMatrUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
-            // PHONG -> {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SphereParamUBO), 1},
         });
         VD_Sphere.init(this, {
             {0, sizeof(SphereVertex), VK_VERTEX_INPUT_RATE_VERTEX}
