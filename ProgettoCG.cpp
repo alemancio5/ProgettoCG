@@ -79,7 +79,6 @@ protected:
     DescriptorSet DS_Wall;
 
     // Sphere variables
-    const float groundLevel = 0.0f;
     const float sphereRadius = 1.0f;
     const float sphereAccel = 100.0f;
     const float sphereJumpSpeed = 100.0f;
@@ -91,7 +90,7 @@ protected:
     glm::vec3 spherePosOld = glm::vec3(5.0f, 1.0f, 5.0f);
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 sphereRot = glm::vec3(0.0f);
+    glm::quat sphereRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotAccel = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -297,8 +296,9 @@ protected:
         float y = spherePos.y + viewHeight;
         viewPos = glm::vec3(x, y, z);
         viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::vec3 forwardDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), 0.0f, glm::cos(viewAzimuth)));
 
+        // Sphere variables update
+        glm::vec3 forwardDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), 0.0f, glm::cos(viewAzimuth)));
         updateSphereVariables(forwardDir, deltaTime);
 
         // Projection variables update
@@ -341,6 +341,7 @@ protected:
     }
 
     void updateSphereVariables(glm::vec3 forwardDir, float deltaTime) {
+
         // Update position in y
         if (spherePos.y > mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
             spherePosAccel.y = gravity;
@@ -382,8 +383,13 @@ protected:
         if (sphereSpeed > 0.0001f) {
             float rotationAngle = sphereSpeed * deltaTime / sphereRadius;
             glm::vec3 movementDir = glm::normalize(spherePosSpeed);
-            glm::vec3 rotationAxis = glm::cross(-movementDir, glm::vec3(0.0f, 1.0f, 0.0f));
-            sphereRot += rotationAxis * rotationAngle;
+            glm::vec3 rotationAxis = glm::cross(movementDir, glm::vec3(0.0f, 1.0f, 0.0f));  // Asse di rotazione
+
+            // Creare un quaternione dalla rotazione
+            glm::quat rotationIncrement = glm::angleAxis(rotationAngle, -rotationAxis);
+
+            // Aggiornare il quaternione della sfera
+            sphereRot = glm::normalize(rotationIncrement * sphereRot);
         }
 
         // Conflicts
@@ -394,10 +400,7 @@ protected:
 
         // Update the matrix
         sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) *
-                       glm::rotate(glm::mat4(1.0f), sphereRot.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
-                       glm::rotate(glm::mat4(1.0f), sphereRot.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
-                       glm::rotate(glm::mat4(1.0f), sphereRot.z, glm::vec3(0.0f, 0.0f, 1.0f));
-
+                       glm::mat4_cast(sphereRot);  // Convertire il quaternione in matrice 4x4
     }
 };
 
