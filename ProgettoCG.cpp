@@ -105,6 +105,9 @@ protected:
     const float viewHeight = 3.0f;
     const float viewSpeed = glm::radians(120.0f);
     float viewAzimuth = 0.0f;
+    float viewElevation = 0.0f;
+    const float viewElevationMax = glm::radians(20.0f);
+    const float viewElevationMin = -glm::radians(25.0f);
     float Ar{};
     glm::mat4 viewMatrix{};
     glm::vec3 viewPos{};
@@ -301,9 +304,18 @@ protected:
         } else if (movementInput.x == 1.0f || rotationInput.y == 1.0f) { // View right
             viewAzimuth -= viewSpeed * deltaTime;
         }
-        if (movementInput.z == -1.0f || rotationInput.x == -1.0f) { // Sphere forward movement
+        if (rotationInput.x == -1.0f) { // View up
+            viewElevation += viewSpeed * deltaTime;
+            if (viewElevation > viewElevationMax)
+                viewElevation = viewElevationMax;
+        } else if (rotationInput.x == 1.0f) { // View down
+            viewElevation -= viewSpeed * deltaTime;
+            if (viewElevation < viewElevationMin)
+                viewElevation = viewElevationMin;
+        }
+        if (movementInput.z == -1.0f) { // Sphere forward movement
             spherePosAccel = -viewDir * sphereAccel;
-        } else if (movementInput.z == 1.0f || rotationInput.x == 1.0f) { // Sphere backward movement
+        } else if (movementInput.z == 1.0f) { // Sphere backward movement
             spherePosAccel = viewDir * sphereAccel;
         } else {
             spherePosAccel.x = 0.0f;
@@ -333,10 +345,10 @@ protected:
     void updateViewVariables() {
         float x = spherePos.x + viewDistance * glm::sin(viewAzimuth);
         float z = spherePos.z + viewDistance * glm::cos(viewAzimuth);
-        float y = spherePos.y + viewHeight;
+        float y = spherePos.y + viewHeight + viewDistance * glm::sin(viewElevation);
         viewPos = glm::vec3(x, y, z);
         viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
-        viewDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), 0.0f, glm::cos(viewAzimuth)));
+        viewDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), glm::sin(viewElevation), glm::cos(viewAzimuth)));
     }
 
     void updateSphereVariables(float deltaTime) {
