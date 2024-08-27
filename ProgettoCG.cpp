@@ -6,7 +6,6 @@ const int mapSize = 1000.0f;
 float mapLevel[mapSize][mapSize];
 const float mapGravity = -100.0f;
 
-
 // Uniform Buffer Object structs
 struct SphereMatrUBO {
     alignas(16) glm::mat4 mvpMat;
@@ -84,8 +83,8 @@ protected:
     float sphereFriction = 0.95f;
     bool sphereJumping = false;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
-    glm::vec3 spherePos = glm::vec3(7.0f, 1.0f, 7.0f);
-    glm::vec3 spherePosOld = glm::vec3(7.0f, 1.0f, 7.0f);
+    glm::vec3 spherePos = glm::vec3(970.0f, 1.0f, 970.0f);
+    glm::vec3 spherePosOld = spherePos;
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::quat sphereRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -126,14 +125,29 @@ protected:
 
     void localInit() override {
         // Global variables initialization
-        for (int i = 0; i < mapSize; i++) {
+        for (int i = 0; i < mapSize; i++) { // Plane
             for (int j = 0; j < mapSize; j++) {
                 mapLevel[i][j] = 0.0f;
             }
         }
-        for (int i = 0; i < 1000; i++) {
-            for (int j = 0; j < 4; j++) {
-                mapLevel[i][j] = 20.0f;
+        for (int i = 20; i < 980; i++) { // Wall 1
+            for (int j = 0; j < 20; j++) {
+                mapLevel[i][j] = 40.0f;
+            }
+        }
+        for (int i = 20; i < 980; i++) { // Wall 2
+            for (int j = 980; j < 1000; j++) {
+                mapLevel[i][j] = 40.0f;
+            }
+        }
+        for (int i = 0; i < 20; i++) { // Wall 3
+            for (int j = 20; j < 980; j++) {
+                mapLevel[i][j] = 40.0f;
+            }
+        }
+        for (int i = 980; i < 1000; i++) { // Wall 4
+            for (int j = 20; j < 980; j++) {
+                mapLevel[i][j] = 40.0f;
             }
         }
 
@@ -187,8 +201,8 @@ protected:
                 {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
         });
         P_Wall.init(this, &VD_Wall, "shaders/PlaneVert.spv", "shaders/PlaneFrag.spv", {&DSL_Wall});
-        M_Wall.init(this, &VD_Wall, "models/Wall.obj", OBJ);
-        T_Wall.init(this, "textures/Wall.jpg");
+        M_Wall.init(this, &VD_Wall, "models/Walls.obj", OBJ);
+        T_Wall.init(this, "textures/Bricks.jpg");
 
         // Others
         DPSZs.uniformBlocksInPool = 2 + 1 + 2;
