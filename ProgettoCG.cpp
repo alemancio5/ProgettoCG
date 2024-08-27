@@ -4,6 +4,8 @@
 // Global variables
 const int mapSize = 1000.0f;
 float mapLevel[mapSize][mapSize];
+const float mapGravity = -100.0f;
+
 
 // Uniform Buffer Object structs
 struct SphereMatrUBO {
@@ -79,7 +81,6 @@ protected:
     // Sphere variables
     const float sphereRadius = 1.0f;
     const float sphereAccel = 100.0f;
-    const float gravity = -100.0f;
     float sphereFriction = 0.95f;
     bool sphereJumping = false;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
@@ -279,34 +280,97 @@ protected:
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
 
         // Use inputs
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) { // Exit
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) { // Game exit
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
-        if (movementInput.x == -1.0f || rotationInput.y == -1.0f) { // Left view
+        if (movementInput.x == -1.0f || rotationInput.y == -1.0f) { // View left
             viewAzimuth += viewSpeed * deltaTime;
-        } else if (movementInput.x == 1.0f || rotationInput.y == 1.0f) { // Right view
+        } else if (movementInput.x == 1.0f || rotationInput.y == 1.0f) { // View right
             viewAzimuth -= viewSpeed * deltaTime;
         }
-        if (movementInput.z == -1.0f || rotationInput.x == -1.0f) { // Forward movement sphere
+        if (movementInput.z == -1.0f || rotationInput.x == -1.0f) { // Sphere forward movement
             spherePosAccel = -viewDir * sphereAccel;
-        } else if (movementInput.z == 1.0f || rotationInput.x == 1.0f) { // Backward movement sphere
+        } else if (movementInput.z == 1.0f || rotationInput.x == 1.0f) { // Sphere backward movement
             spherePosAccel = viewDir * sphereAccel;
         } else {
             spherePosAccel.x = 0.0f;
             spherePosAccel.z = 0.0f;
+        }
+        if (fireInput && !sphereJumping) { // Sphere jump
+            spherePosSpeed.y = 60.0f;
+            spherePos.y = spherePosSpeed.y * deltaTime;
+            sphereJumping = true;
         }
 
         // View variables update
         updateViewVariables();
 
         // Sphere variables update
-        updateSphereVariables(deltaTime, fireInput);
+        updateSphereVariables(deltaTime);
 
         // Projection variables update
         projectionMatrix = glm::perspective(glm::radians(75.0f), Ar, 0.1f, 160.0f);
         projectionMatrix[1][1] *= -1;
         projectionViewMatrix = projectionMatrix * viewMatrix;
 
+        // UBOs update
+        updateUBO(currentImage);
+    }
+
+    void updateViewVariables() {
+        float x = spherePos.x + viewDistance * glm::sin(viewAzimuth);
+        float z = spherePos.z + viewDistance * glm::cos(viewAzimuth);
+        float y = spherePos.y + viewHeight;
+        viewPos = glm::vec3(x, y, z);
+        viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
+        viewDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), 0.0f, glm::cos(viewAzimuth)));
+    }
+
+    void updateSphereVariables(float deltaTime) {
+        // Update position in y
+        if (spherePos.y > mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
+            spherePosAccel.y = mapGravity;
+            spherePosSpeed.y += spherePosAccel.y * deltaTime;
+            spherePos.y += spherePosSpeed.y * deltaTime;
+            sphereJumping = true;
+        }
+        else {
+            spherePosAccel.y = 0.0f;
+            spherePosSpeed.y = 0.0f;
+            spherePos.y = mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius;
+            sphereJumping = false;
+        }
+
+        // Update position in x and z
+        spherePosOld = spherePos;
+        spherePosSpeed.x += spherePosAccel.x * deltaTime;
+        spherePosSpeed.z += spherePosAccel.z * deltaTime;
+        spherePos.x += spherePosSpeed.x * deltaTime;
+        spherePos.z += spherePosSpeed.z * deltaTime;
+        spherePosSpeed.x *= sphereFriction;
+        spherePosSpeed.z *= sphereFriction;
+
+        // Update rotation
+        float sphereSpeed = glm::length(spherePosSpeed);
+        if (sphereSpeed > 0.0001f) {
+            float rotationAngle = sphereSpeed * deltaTime / sphereRadius;
+            glm::vec3 movementDir = glm::normalize(spherePosSpeed);
+            glm::vec3 rotationAxis = glm::cross(movementDir, glm::vec3(0.0f, 1.0f, 0.0f));
+            glm::quat rotationIncrement = glm::angleAxis(rotationAngle, -rotationAxis);
+            sphereRot = glm::normalize(rotationIncrement * sphereRot);
+        }
+
+        // Check conflicts
+        if (mapLevel[(int)(spherePosOld.x - sphereRadius)][(int)(spherePosOld.z - sphereRadius)] < mapLevel[(int)(spherePos.x - sphereRadius)][(int)(spherePos.z - sphereRadius)]) {
+            spherePos.x = spherePosOld.x;
+            spherePos.z = spherePosOld.z;
+        }
+
+        // Update matrix
+        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::mat4_cast(sphereRot);
+    }
+
+    void updateUBO(uint32_t currentImage) {
         // Sphere UBO update
         SphereMatrUBO UBOm_Sphere{};
         UBOm_Sphere.mvpMat = projectionViewMatrix * sphereMatrix;
@@ -339,64 +403,6 @@ protected:
         UBOp_Wall.lightPos = spherePos;
         UBOp_Wall.ambientColor = LAmb;
         DS_Wall.map(currentImage, &UBOp_Wall, 2);
-    }
-
-    void updateViewVariables() {
-        float x = spherePos.x + viewDistance * glm::sin(viewAzimuth);
-        float z = spherePos.z + viewDistance * glm::cos(viewAzimuth);
-        float y = spherePos.y + viewHeight;
-        viewPos = glm::vec3(x, y, z);
-        viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
-        viewDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), 0.0f, glm::cos(viewAzimuth)));
-    }
-
-    void updateSphereVariables(float deltaTime, bool fire) {
-        // Update position in y
-        if (spherePos.y > mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
-            spherePosAccel.y = gravity;
-            spherePosSpeed.y += spherePosAccel.y * deltaTime;
-            spherePos.y += spherePosSpeed.y * deltaTime;
-            sphereJumping = true;
-        }
-        else {
-            spherePosAccel.y = 0.0f;
-            spherePosSpeed.y = 0.0f;
-            spherePos.y = mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius;
-            sphereJumping = false;
-        }
-        if (fire && !sphereJumping) {
-            spherePosSpeed.y = 60.0f;
-            spherePos.y = spherePosSpeed.y * deltaTime;
-            sphereJumping = true;
-        }
-
-        // Update position in x and z
-        spherePosOld = spherePos;
-        spherePosSpeed.x += spherePosAccel.x * deltaTime;
-        spherePosSpeed.z += spherePosAccel.z * deltaTime;
-        spherePos.x += spherePosSpeed.x * deltaTime;
-        spherePos.z += spherePosSpeed.z * deltaTime;
-        spherePosSpeed.x *= sphereFriction;
-        spherePosSpeed.z *= sphereFriction;
-
-        // Update rotation
-        float sphereSpeed = glm::length(spherePosSpeed);
-        if (sphereSpeed > 0.0001f) {
-            float rotationAngle = sphereSpeed * deltaTime / sphereRadius;
-            glm::vec3 movementDir = glm::normalize(spherePosSpeed);
-            glm::vec3 rotationAxis = glm::cross(movementDir, glm::vec3(0.0f, 1.0f, 0.0f));
-            glm::quat rotationIncrement = glm::angleAxis(rotationAngle, -rotationAxis);
-            sphereRot = glm::normalize(rotationIncrement * sphereRot);
-        }
-
-        // Conflicts
-        if (mapLevel[(int)(spherePosOld.x - sphereRadius)][(int)(spherePosOld.z - sphereRadius)] < mapLevel[(int)(spherePos.x - sphereRadius)][(int)(spherePos.z - sphereRadius)]) {
-            spherePos.x = spherePosOld.x;
-            spherePos.z = spherePosOld.z;
-        }
-
-        // Update matrix
-        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::mat4_cast(sphereRot);
     }
 };
 
