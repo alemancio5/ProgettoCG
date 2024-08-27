@@ -133,23 +133,28 @@ protected:
                 mapLevel[i][j] = 0.0f;
             }
         }
-        for (int i = 0; i < 1000; i++) { // Wall 1
+        for (int i = 0; i < 1000; i++) { // Wall #1
             for (int j = 0; j < 20; j++) {
                 mapLevel[i][j] = 40.0f;
             }
         }
-        for (int i = 0; i < 1000; i++) { // Wall 2
+        for (int i = 0; i < 1000; i++) { // Wall #2
             for (int j = 980; j < 1000; j++) {
                 mapLevel[i][j] = 40.0f;
             }
         }
-        for (int i = 0; i < 20; i++) { // Wall 3
+        for (int i = 0; i < 20; i++) { // Wall #3
             for (int j = 0; j < 1000; j++) {
                 mapLevel[i][j] = 40.0f;
             }
         }
-        for (int i = 980; i < 1000; i++) { // Wall 4
+        for (int i = 980; i < 1000; i++) { // Wall #4
             for (int j = 0; j < 1000; j++) {
+                mapLevel[i][j] = 40.0f;
+            }
+        }
+        for (int i = 0; i < 600; i++) { // Wall #5
+            for (int j = 80; j < 120; j++) {
                 mapLevel[i][j] = 40.0f;
             }
         }
@@ -305,13 +310,13 @@ protected:
             viewAzimuth -= viewSpeed * deltaTime;
         }
         if (rotationInput.x == -1.0f) { // View up
-            viewElevation += viewSpeed * deltaTime;
-            if (viewElevation > viewElevationMax)
-                viewElevation = viewElevationMax;
-        } else if (rotationInput.x == 1.0f) { // View down
             viewElevation -= viewSpeed * deltaTime;
             if (viewElevation < viewElevationMin)
                 viewElevation = viewElevationMin;
+        } else if (rotationInput.x == 1.0f) { // View down
+            viewElevation += viewSpeed * deltaTime;
+            if (viewElevation > viewElevationMax)
+                viewElevation = viewElevationMax;
         }
         if (movementInput.z == -1.0f) { // Sphere forward movement
             spherePosAccel = -viewDir * sphereAccel;
