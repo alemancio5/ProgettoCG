@@ -51,7 +51,8 @@ struct WallVertex {
 };
 
 
-class NamelessGame : public BaseProject {
+
+class Labyball : public BaseProject {
 protected:
     // Sphere
     DescriptorSetLayout DSL_Sphere;
@@ -109,13 +110,12 @@ protected:
     const float viewSpeed = glm::radians(120.0f);
     glm::mat4 viewMatrix{};
     glm::vec3 viewPos{};
-    glm::vec3 viewOffset = glm::vec3(0.0f, 10.0f, 3.0f);
     float Ar{};
 
     void setWindowParameters() override {
         windowWidth = 800;
         windowHeight = 600;
-        windowTitle = "The Labyrinth";
+        windowTitle = "Labyball";
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.1f, 0.3f, 0.5f, 1.0f};
         Ar = (float)windowWidth / (float)windowHeight;
@@ -195,7 +195,6 @@ protected:
         DPSZs.uniformBlocksInPool = 2 + 1 + 2;
         DPSZs.texturesInPool = 3;
         DPSZs.setsInPool = 3;
-        viewMatrix = glm::translate(glm::mat4(1.0f), -viewOffset);
     }
 
     void pipelinesAndDescriptorSetsInit() override {
@@ -405,7 +404,7 @@ protected:
 
 
 int main() {
-    NamelessGame app;
+    Labyball app;
 
     try {
         app.run();
