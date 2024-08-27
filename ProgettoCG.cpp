@@ -1,6 +1,10 @@
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
 
+// Global variables
+const int mapSize = 1000.0f;
+float mapLevel[mapSize][mapSize];
+
 // Uniform Buffer Object structs
 struct SphereMatrUBO {
     alignas(16) glm::mat4 mvpMat;
@@ -17,22 +21,6 @@ struct WallMatrUBO {
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-
-// UBO - Parameters
-/*
-PHONG LIGHT -> Do not work as a light from top
-Working on Emission + Plane Shaders to create the cone
-    struct SphereParamUBO {
-        alignas(16) glm::vec3 lightDir;
-        alignas(16) glm::vec3 lightPos;
-        alignas(16) glm::vec4 lightColor;
-        alignas(4) float cosIn;
-        alignas(4) float cosOut;
-        alignas(16) glm::vec3 eyePos;
-        alignas(16) glm::vec4 eyeDir;
-        alignas(4) float lightOn;
-    };
-*/
 
 struct PlaneParamUBO {
     alignas(4) glm::vec3 ambientColor;
@@ -61,6 +49,7 @@ struct WallVertex {
     glm::vec2 uv;
     glm::vec3 norm;
 };
+
 
 class NamelessGame : public BaseProject {
 protected:
@@ -93,57 +82,34 @@ protected:
     const float sphereRadius = 1.0f;
     const float sphereAccel = 100.0f;
     const float sphereJumpSpeed = 100.0f;
-    const float gravity = -50.f;
+    const float gravity = -100.0f;
     float sphereFriction = 0.95f;
+    bool sphereJumping = false;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
-    glm::vec3 spherePos = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 spherePos = glm::vec3(5.0f, 1.0f, 5.0f);
+    glm::vec3 spherePosOld = glm::vec3(5.0f, 1.0f, 5.0f);
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRot = glm::vec3(0.0f);
     glm::vec3 sphereRotSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotAccel = glm::vec3(0.0f, 0.0f, 0.0f);
-    bool isJumping = false;
-    /*
-     PHONG VARIABLES
-        glm::vec3 T = glm::vec3(-5.231395721435547, 4.960061073303223, 2.542616605758667);
-        glm::quat Q = glm::quat(0.8674059510231018, -0.4086896479129791, -0.21177199482917786, 0.18902988731861115);
-        glm::vec3 S = glm::vec3(1.0f, 1.0f, 1.0f); // Scala unitaria
-        // Matrice di Trasformazione
-        glm::mat4 LWm = glm::translate(glm::mat4(1.0f), T) *
-        glm::mat4(Q) *
-        glm::scale(glm::mat4(1.0f), S);
-        // Colore della luce
-        glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
-        // Intensità della luce
-        float LInt = 50.0f;
-        // Coseni degli angoli del cono
-        float ScosIn = cos(0.2f);
-        float ScosOut = cos(0.4f);
-        // Stato delle luci (tutte accese)
-        float lightOn = 1.0f;
-     */
 
     // Plane Variables
     float LInt = 50.0f;
     glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
     glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
 
-    // Wall Variables
-    glm::vec3 wallMax = glm::vec3(50.f, 0.f, -9.f);
-    glm::vec3 wallMin = glm::vec3(-50.f, 0.f, -11.f);
-
-
     // Projection variables
     glm::mat4 projectionMatrix{};
     glm::mat4 viewProjectionMatrix{};
 
     // View variables
-    const float viewDistance = 5.0f;
+    const float viewDistance = 8.0f;
     const float viewHeight = 3.0f;
     const float viewSpeed = glm::radians(120.0f);
     glm::mat4 viewMatrix{};
     glm::vec3 viewPos{};
-    glm::vec3 viewOffset = glm::vec3(0.0f, 3.0f, 5.0f);
+    glm::vec3 viewOffset = glm::vec3(0.0f, 10.0f, 3.0f);
     float Ar{};
 
     void setWindowParameters() override {
@@ -160,6 +126,18 @@ protected:
     }
 
     void localInit() override {
+        // Global variables initialization
+        for (int i = 0; i < mapSize; i++) {
+            for (int j = 0; j < mapSize; j++) {
+                mapLevel[i][j] = 0.0f;
+            }
+        }
+        for (int i = 0; i < 1000; i++) {
+            for (int j = 0; j < 4; j++) {
+                mapLevel[i][j] = 20.0f;
+            }
+        }
+
         // Sphere
         DSL_Sphere.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMatrUBO), 1},
@@ -308,26 +286,6 @@ protected:
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
 
-        /*
-         PHONG
-            if(glfwGetKey(window, GLFW_KEY_1)) {
-                lightOn = 1-lightOn;
-            }
-         */
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !isJumping) {
-            spherePosSpeed.y = sphereJumpSpeed;
-            isJumping = true;
-        }
-        if (isJumping) {
-            spherePosSpeed.y += gravity * deltaTime;
-        }
-        spherePos.y += spherePosSpeed.y * deltaTime;
-        if (spherePos.y <= groundLevel) {
-            spherePos.y = groundLevel;
-            spherePosSpeed.y = 0.0f;
-            isJumping = false;
-        }
-
         // View variables update
         static float viewAzimuth = 0.0f;
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
@@ -342,64 +300,7 @@ protected:
         viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::vec3 forwardDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), 0.0f, glm::cos(viewAzimuth)));
 
-        // Sphere variables update
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            spherePosAccel = -forwardDir * sphereAccel;
-        } else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            spherePosAccel = forwardDir * sphereAccel;
-        } else {
-            spherePosAccel = glm::vec3(0.0f);
-        }
-        spherePosSpeed += spherePosAccel * deltaTime;
-        spherePos += spherePosSpeed * deltaTime;
-        spherePosSpeed *= sphereFriction;
-        float sphereSpeed = glm::length(spherePosSpeed);
-        if (sphereSpeed > 0.0001f) {
-            float rotationAngle = sphereSpeed * deltaTime / sphereRadius;
-            glm::vec3 movementDir = glm::normalize(spherePosSpeed);
-            glm::vec3 rotationAxis = glm::cross(-movementDir, glm::vec3(0.0f, 1.0f, 0.0f));
-            sphereRot += rotationAxis * rotationAngle;
-        }
-        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) *
-                       glm::rotate(glm::mat4(1.0f), sphereRot.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
-                       glm::rotate(glm::mat4(1.0f), sphereRot.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
-                       glm::rotate(glm::mat4(1.0f), sphereRot.z, glm::vec3(0.0f, 0.0f, 1.0f));
-
-        // Collisione
-        glm::mat4 leftWallMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
-
-        if (spherePos.x - sphereRadius < wallMax.x && spherePos.x + sphereRadius > wallMin.x &&
-            spherePos.y - sphereRadius < wallMax.y && spherePos.y + sphereRadius > wallMin.y &&
-            spherePos.z - sphereRadius < wallMax.z && spherePos.z + sphereRadius > wallMin.z) {
-
-            // Se c'è una collisione, riposiziona la sfera fuori dal muro
-            glm::vec3 penetrationDepth = glm::vec3(0.0f);
-
-            // X
-            if (spherePos.x < wallMin.x) {
-                penetrationDepth.x = (wallMin.x)- (spherePos.x - sphereRadius);;
-            } else if (spherePos.x > wallMax.x) {
-                penetrationDepth.x = (wallMax.x)- (spherePos.x + sphereRadius);;
-            }
-
-            // Y
-            if (spherePos.y < wallMin.y) {
-                penetrationDepth.y = (wallMin.y)- (spherePos.y - sphereRadius);;
-            } else if (spherePos.y > wallMax.y) {
-                penetrationDepth.y = (wallMax.y)- (spherePos.y + sphereRadius);;
-            }
-
-            // Z
-            if (spherePos.z < wallMin.z) {
-                penetrationDepth.z = wallMin.z - (spherePos.z - sphereRadius);;
-            } else if (spherePos.z > wallMax.z) {
-                penetrationDepth.z = wallMax.z - (spherePos.z + sphereRadius);;
-            }
-
-            spherePos = penetrationDepth;
-            spherePosSpeed *= sphereFriction;
-        }
-
+        updateSphereVariables(forwardDir, deltaTime);
 
         // Projection variables update
         projectionMatrix = glm::perspective(glm::radians(75.0f), Ar, 0.1f, 160.0f);
@@ -412,19 +313,6 @@ protected:
         UBOm_Sphere.mMat = sphereMatrix;
         UBOm_Sphere.nMat = glm::mat4(1.0f);
         DS_Sphere.map(currentImage, &UBOm_Sphere, 0);
-
-        /*
-         PHONG
-            SphereParamUBO UBOp_Sphere{};
-            UBOp_Sphere.lightPos = spherePos;
-            UBOp_Sphere.lightDir = spherePos;
-            UBOp_Sphere.lightColor = glm::vec4(LCol, LInt);
-            UBOp_Sphere.cosIn = ScosIn;
-            UBOp_Sphere.cosOut = ScosOut;
-            UBOp_Sphere.eyePos = viewPos;
-            UBOp_Sphere.lightOn = lightOn;
-            DS_Sphere.map(currentImage, &UBOp_Sphere, 2);
-         */
 
         // Plane UBO update
         PlaneMatrUBO UBOm_Plane{};
@@ -441,7 +329,7 @@ protected:
 
         // Wall UBO update
         WallMatrUBO UBOm_Wall{};
-        UBOm_Wall.mvpMat = viewProjectionMatrix*leftWallMatrix; //TODO: mettere *leftWallMatrix
+        UBOm_Wall.mvpMat = viewProjectionMatrix;
         UBOm_Wall.mMat = glm::mat4(1.0f);
         UBOm_Wall.nMat = glm::mat4(1.0f);
         DS_Wall.map(currentImage, &UBOm_Wall, 0);
@@ -451,6 +339,66 @@ protected:
         UBOp_Wall.lightPos = spherePos;
         UBOp_Wall.ambientColor = LAmb;
         DS_Wall.map(currentImage, &UBOp_Wall, 2);
+    }
+
+    void updateSphereVariables(glm::vec3 forwardDir, float deltaTime) {
+        // Update position in y
+        if (spherePos.y > mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
+            spherePosAccel.y = gravity;
+            spherePosSpeed.y += spherePosAccel.y * deltaTime;
+            spherePos.y += spherePosSpeed.y * deltaTime;
+            sphereJumping = true;
+        }
+        else {
+            spherePosAccel.y = 0.0f;
+            spherePosSpeed.y = 0.0f;
+            spherePos.y = mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius;
+            sphereJumping = false;
+        }
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !sphereJumping) {
+            spherePosSpeed.y = 60.0f;
+            spherePos.y = spherePosSpeed.y * deltaTime;
+            sphereJumping = true;
+        }
+
+        // Update position in x and z
+        spherePosOld = spherePos;
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            spherePosAccel = -forwardDir * sphereAccel;
+        } else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            spherePosAccel = forwardDir * sphereAccel;
+        } else {
+            spherePosAccel.x = 0.0f;
+            spherePosAccel.z = 0.0f;
+        }
+        spherePosSpeed.x += spherePosAccel.x * deltaTime;
+        spherePosSpeed.z += spherePosAccel.z * deltaTime;
+        spherePos.x += spherePosSpeed.x * deltaTime;
+        spherePos.z += spherePosSpeed.z * deltaTime;
+        spherePosSpeed.x *= sphereFriction;
+        spherePosSpeed.z *= sphereFriction;
+
+        // Update rotation
+        float sphereSpeed = glm::length(spherePosSpeed);
+        if (sphereSpeed > 0.0001f) {
+            float rotationAngle = sphereSpeed * deltaTime / sphereRadius;
+            glm::vec3 movementDir = glm::normalize(spherePosSpeed);
+            glm::vec3 rotationAxis = glm::cross(-movementDir, glm::vec3(0.0f, 1.0f, 0.0f));
+            sphereRot += rotationAxis * rotationAngle;
+        }
+
+        // Conflicts
+        if (mapLevel[(int)(spherePosOld.x - sphereRadius)][(int)(spherePosOld.z - sphereRadius)] < mapLevel[(int)(spherePos.x - sphereRadius)][(int)(spherePos.z - sphereRadius)]) {
+            spherePos.x = spherePosOld.x;
+            spherePos.z = spherePosOld.z;
+        }
+
+        // Update the matrix
+        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) *
+                       glm::rotate(glm::mat4(1.0f), sphereRot.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
+                       glm::rotate(glm::mat4(1.0f), sphereRot.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
+                       glm::rotate(glm::mat4(1.0f), sphereRot.z, glm::vec3(0.0f, 0.0f, 1.0f));
+
     }
 };
 
