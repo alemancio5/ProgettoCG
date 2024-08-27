@@ -83,7 +83,7 @@ protected:
     float sphereFriction = 0.95f;
     bool sphereJumping = false;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
-    glm::vec3 spherePos = glm::vec3(970.0f, 1.0f, 970.0f);
+    glm::vec3 spherePos = glm::vec3(30.0f, 1.0f, 30.0f);
     glm::vec3 spherePosOld = spherePos;
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -363,6 +363,28 @@ protected:
         spherePosSpeed.x *= sphereFriction;
         spherePosSpeed.z *= sphereFriction;
 
+        // Collision detection
+        if (mapLevel[(int)(spherePos.x + sphereRadius)][(int)(spherePosOld.z)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
+            if (spherePosSpeed.x >= 0.0f)
+                spherePos.x = spherePosOld.x;
+        }
+        else if (mapLevel[(int)(spherePos.x - sphereRadius)][(int)(spherePosOld.z)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
+            if (spherePosSpeed.x <= 0.0f)
+                spherePos.x = spherePosOld.x;
+        }
+        else if (mapLevel[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
+            if (spherePosSpeed.z >= 0.0f)
+                spherePos.z = spherePosOld.z;
+        }
+        else if (mapLevel[(int)(spherePos.x)][(int)(spherePosOld.z - sphereRadius)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
+            if (spherePosSpeed.z <= 0.0f)
+                spherePos.z = spherePosOld.z;
+        }
+
+
+        std::cout << viewDir.x << " " << viewDir.y << " " << viewDir.z << std::endl;
+
+
         // Update rotation
         float sphereSpeed = glm::length(spherePosSpeed);
         if (sphereSpeed > 0.0001f) {
@@ -371,12 +393,6 @@ protected:
             glm::vec3 rotationAxis = glm::cross(movementDir, glm::vec3(0.0f, 1.0f, 0.0f));
             glm::quat rotationIncrement = glm::angleAxis(rotationAngle, -rotationAxis);
             sphereRot = glm::normalize(rotationIncrement * sphereRot);
-        }
-
-        // Check conflicts
-        if (mapLevel[(int)(spherePosOld.x - sphereRadius)][(int)(spherePosOld.z - sphereRadius)] < mapLevel[(int)(spherePos.x - sphereRadius)][(int)(spherePos.z - sphereRadius)]) {
-            spherePos.x = spherePosOld.x;
-            spherePos.z = spherePosOld.z;
         }
 
         // Update matrix
