@@ -130,23 +130,23 @@ protected:
                 mapLevel[i][j] = 0.0f;
             }
         }
-        for (int i = 20; i < 980; i++) { // Wall 1
+        for (int i = 0; i < 1000; i++) { // Wall 1
             for (int j = 0; j < 20; j++) {
                 mapLevel[i][j] = 40.0f;
             }
         }
-        for (int i = 20; i < 980; i++) { // Wall 2
+        for (int i = 0; i < 1000; i++) { // Wall 2
             for (int j = 980; j < 1000; j++) {
                 mapLevel[i][j] = 40.0f;
             }
         }
         for (int i = 0; i < 20; i++) { // Wall 3
-            for (int j = 20; j < 980; j++) {
+            for (int j = 0; j < 1000; j++) {
                 mapLevel[i][j] = 40.0f;
             }
         }
         for (int i = 980; i < 1000; i++) { // Wall 4
-            for (int j = 20; j < 980; j++) {
+            for (int j = 0; j < 1000; j++) {
                 mapLevel[i][j] = 40.0f;
             }
         }
@@ -372,7 +372,7 @@ protected:
             if (spherePosSpeed.x <= 0.0f)
                 spherePos.x = spherePosOld.x;
         }
-        else if (mapLevel[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
+        if (mapLevel[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
             if (spherePosSpeed.z >= 0.0f)
                 spherePos.z = spherePosOld.z;
         }
@@ -380,10 +380,6 @@ protected:
             if (spherePosSpeed.z <= 0.0f)
                 spherePos.z = spherePosOld.z;
         }
-
-
-        std::cout << viewDir.x << " " << viewDir.y << " " << viewDir.z << std::endl;
-
 
         // Update rotation
         float sphereSpeed = glm::length(spherePosSpeed);
