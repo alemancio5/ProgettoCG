@@ -16,18 +16,16 @@ struct PlaneMatrUBO {
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-struct WallMatrUBO {
-    alignas(16) glm::mat4 mvpMat;
-    alignas(16) glm::mat4 mMat;
-    alignas(16) glm::mat4 nMat;
-};
-
 struct PlaneParamUBO {
     alignas(4) glm::vec3 ambientColor;
     alignas(4) glm::vec3 lightPos;
     alignas(4) glm::vec3 lightColor;
 };
-
+struct WallMatrUBO {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
 struct WallParamUBO {
     alignas(4) glm::vec3 ambientColor;
     alignas(4) glm::vec3 lightPos;
@@ -81,35 +79,36 @@ protected:
     // Sphere variables
     const float sphereRadius = 1.0f;
     const float sphereAccel = 100.0f;
-    const float sphereJumpSpeed = 100.0f;
     const float gravity = -100.0f;
     float sphereFriction = 0.95f;
     bool sphereJumping = false;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
-    glm::vec3 spherePos = glm::vec3(5.0f, 1.0f, 5.0f);
-    glm::vec3 spherePosOld = glm::vec3(5.0f, 1.0f, 5.0f);
+    glm::vec3 spherePos = glm::vec3(7.0f, 1.0f, 7.0f);
+    glm::vec3 spherePosOld = glm::vec3(7.0f, 1.0f, 7.0f);
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::quat sphereRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotAccel = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    // Plane Variables
+    // Plane variables
     float LInt = 50.0f;
     glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
     glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
 
     // Projection variables
     glm::mat4 projectionMatrix{};
-    glm::mat4 viewProjectionMatrix{};
+    glm::mat4 projectionViewMatrix{};
 
     // View variables
     const float viewDistance = 8.0f;
     const float viewHeight = 3.0f;
     const float viewSpeed = glm::radians(120.0f);
+    float viewAzimuth = 0.0f;
+    float Ar{};
     glm::mat4 viewMatrix{};
     glm::vec3 viewPos{};
-    float Ar{};
+    glm::vec3 viewDir{};
 
     void setWindowParameters() override {
         windowWidth = 800;
@@ -272,50 +271,52 @@ protected:
     }
 
     void updateUniformBuffer(uint32_t currentImage) override {
-        // System inputs
+        // Get inputs
         float deltaTime;
         auto movementInput = glm::vec3(0.0f);
         auto rotationInput = glm::vec3(0.0f);
         bool fireInput = false;
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
 
-        // Keyboard inputs
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+        // Use inputs
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) { // Exit
             glfwSetWindowShouldClose(window, GL_TRUE);
+        }
+        if (movementInput.x == -1.0f || rotationInput.y == -1.0f) { // Left view
+            viewAzimuth += viewSpeed * deltaTime;
+        } else if (movementInput.x == 1.0f || rotationInput.y == 1.0f) { // Right view
+            viewAzimuth -= viewSpeed * deltaTime;
+        }
+        if (movementInput.z == -1.0f || rotationInput.x == -1.0f) { // Forward movement sphere
+            spherePosAccel = -viewDir * sphereAccel;
+        } else if (movementInput.z == 1.0f || rotationInput.x == 1.0f) { // Backward movement sphere
+            spherePosAccel = viewDir * sphereAccel;
+        } else {
+            spherePosAccel.x = 0.0f;
+            spherePosAccel.z = 0.0f;
         }
 
         // View variables update
-        static float viewAzimuth = 0.0f;
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            viewAzimuth += viewSpeed * deltaTime;
-        } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            viewAzimuth -= viewSpeed * deltaTime;
-        }
-        float x = spherePos.x + viewDistance * glm::sin(viewAzimuth);
-        float z = spherePos.z + viewDistance * glm::cos(viewAzimuth);
-        float y = spherePos.y + viewHeight;
-        viewPos = glm::vec3(x, y, z);
-        viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
+        updateViewVariables();
 
         // Sphere variables update
-        glm::vec3 forwardDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), 0.0f, glm::cos(viewAzimuth)));
-        updateSphereVariables(forwardDir, deltaTime);
+        updateSphereVariables(deltaTime, fireInput);
 
         // Projection variables update
         projectionMatrix = glm::perspective(glm::radians(75.0f), Ar, 0.1f, 160.0f);
         projectionMatrix[1][1] *= -1;
-        viewProjectionMatrix = projectionMatrix * viewMatrix;
+        projectionViewMatrix = projectionMatrix * viewMatrix;
 
         // Sphere UBO update
         SphereMatrUBO UBOm_Sphere{};
-        UBOm_Sphere.mvpMat = viewProjectionMatrix * sphereMatrix;
+        UBOm_Sphere.mvpMat = projectionViewMatrix * sphereMatrix;
         UBOm_Sphere.mMat = sphereMatrix;
         UBOm_Sphere.nMat = glm::mat4(1.0f);
         DS_Sphere.map(currentImage, &UBOm_Sphere, 0);
 
         // Plane UBO update
         PlaneMatrUBO UBOm_Plane{};
-        UBOm_Plane.mvpMat = viewProjectionMatrix;
+        UBOm_Plane.mvpMat = projectionViewMatrix;
         UBOm_Plane.mMat = glm::mat4(1.0f);
         UBOm_Plane.nMat = glm::mat4(1.0f);
         DS_Plane.map(currentImage, &UBOm_Plane, 0);
@@ -328,7 +329,7 @@ protected:
 
         // Wall UBO update
         WallMatrUBO UBOm_Wall{};
-        UBOm_Wall.mvpMat = viewProjectionMatrix;
+        UBOm_Wall.mvpMat = projectionViewMatrix;
         UBOm_Wall.mMat = glm::mat4(1.0f);
         UBOm_Wall.nMat = glm::mat4(1.0f);
         DS_Wall.map(currentImage, &UBOm_Wall, 0);
@@ -340,8 +341,16 @@ protected:
         DS_Wall.map(currentImage, &UBOp_Wall, 2);
     }
 
-    void updateSphereVariables(glm::vec3 forwardDir, float deltaTime) {
+    void updateViewVariables() {
+        float x = spherePos.x + viewDistance * glm::sin(viewAzimuth);
+        float z = spherePos.z + viewDistance * glm::cos(viewAzimuth);
+        float y = spherePos.y + viewHeight;
+        viewPos = glm::vec3(x, y, z);
+        viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
+        viewDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), 0.0f, glm::cos(viewAzimuth)));
+    }
 
+    void updateSphereVariables(float deltaTime, bool fire) {
         // Update position in y
         if (spherePos.y > mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
             spherePosAccel.y = gravity;
@@ -355,7 +364,7 @@ protected:
             spherePos.y = mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius;
             sphereJumping = false;
         }
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !sphereJumping) {
+        if (fire && !sphereJumping) {
             spherePosSpeed.y = 60.0f;
             spherePos.y = spherePosSpeed.y * deltaTime;
             sphereJumping = true;
@@ -363,14 +372,6 @@ protected:
 
         // Update position in x and z
         spherePosOld = spherePos;
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            spherePosAccel = -forwardDir * sphereAccel;
-        } else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            spherePosAccel = forwardDir * sphereAccel;
-        } else {
-            spherePosAccel.x = 0.0f;
-            spherePosAccel.z = 0.0f;
-        }
         spherePosSpeed.x += spherePosAccel.x * deltaTime;
         spherePosSpeed.z += spherePosAccel.z * deltaTime;
         spherePos.x += spherePosSpeed.x * deltaTime;
@@ -383,12 +384,8 @@ protected:
         if (sphereSpeed > 0.0001f) {
             float rotationAngle = sphereSpeed * deltaTime / sphereRadius;
             glm::vec3 movementDir = glm::normalize(spherePosSpeed);
-            glm::vec3 rotationAxis = glm::cross(movementDir, glm::vec3(0.0f, 1.0f, 0.0f));  // Asse di rotazione
-
-            // Creare un quaternione dalla rotazione
+            glm::vec3 rotationAxis = glm::cross(movementDir, glm::vec3(0.0f, 1.0f, 0.0f));
             glm::quat rotationIncrement = glm::angleAxis(rotationAngle, -rotationAxis);
-
-            // Aggiornare il quaternione della sfera
             sphereRot = glm::normalize(rotationIncrement * sphereRot);
         }
 
@@ -398,9 +395,8 @@ protected:
             spherePos.z = spherePosOld.z;
         }
 
-        // Update the matrix
-        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) *
-                       glm::mat4_cast(sphereRot);  // Convertire il quaternione in matrice 4x4
+        // Update matrix
+        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::mat4_cast(sphereRot);
     }
 };
 
