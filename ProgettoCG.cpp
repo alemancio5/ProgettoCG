@@ -1,47 +1,38 @@
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
 
-// Map variables
-const int mapSize = 1000.0f;
-float mapHeight[mapSize][mapSize];
-float mapItems[mapSize][mapSize];
-const float mapGravity = -100.0f;
+
 
 // Uniform Buffer Object structs
-struct SphereMatrUBO {
+struct SphereMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-struct PlaneMatrUBO {
+struct PlaneMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-struct PlaneParamUBO {
+struct PlanePUBO {
     alignas(4) glm::vec3 ambientColor;
     alignas(4) glm::vec3 lightPos;
     alignas(4) glm::vec3 lightColor;
 };
-
-#define BORDER_WALL 4
-struct BorderWallMatrUBO {
-    alignas(16) glm::mat4 mvpMat[BORDER_WALL];
-    alignas(16) glm::mat4 mMat[BORDER_WALL];
-    alignas(16) glm::mat4 nMat[BORDER_WALL];
+struct BorderMUBO {
+    alignas(16) glm::mat4 mvpMat[10];
+    alignas(16) glm::mat4 mMat[10];
+    alignas(16) glm::mat4 nMat[10];
 };
-
-struct WallParamUBO {
+struct WallMUBO {
+    alignas(16) glm::mat4 mvpMat[30];
+    alignas(16) glm::mat4 mMat[30];
+    alignas(16) glm::mat4 nMat[30];
+};
+struct WallPUBO {
     alignas(4) glm::vec3 ambientColor;
     alignas(4) glm::vec3 lightPos;
     alignas(4) glm::vec3 lightColor;
-};
-
-#define LEVEL_0_WALL 10
-struct Level0WallMatrUBO {
-    alignas(16) glm::mat4 mvpMat[LEVEL_0_WALL];
-    alignas(16) glm::mat4 mMat[LEVEL_0_WALL];
-    alignas(16) glm::mat4 nMat[LEVEL_0_WALL];
 };
 
 // Vertexes structs
@@ -54,13 +45,12 @@ struct PlaneVertex {
     glm::vec2 uv;
     glm::vec3 norm;
 };
-
-struct BorderWallVertex {
+struct BorderVertex {
     glm::vec3 pos;
     glm::vec2 uv;
     glm::vec3 norm;
 };
-struct Level0WallVertex {
+struct WallVertex {
     glm::vec3 pos;
     glm::vec2 uv;
     glm::vec3 norm;
@@ -68,8 +58,34 @@ struct Level0WallVertex {
 
 
 
-class Labyball : public BaseProject {
+class Level1 : public BaseProject {
 protected:
+
+    // Map
+    static const int mapSize = 1000;
+    float mapHeight[mapSize][mapSize];
+    float mapItems[mapSize][mapSize];
+    const float mapGravity = -100.0f;
+
+    // View
+    float viewDistance = 8.0f;
+    float viewHeight = 3.0f;
+    float viewAzimuth = 0.0f;
+    float viewElevation = 0.0f;
+    const float viewSpeed = glm::radians(120.0f);
+    const float viewElevationMax = glm::radians(20.0f);
+    const float viewElevationMin = -glm::radians(25.0f);
+    float Ar{};
+    glm::mat4 viewMatrix{};
+    glm::vec3 viewPos{};
+    glm::vec3 viewPosOld{};
+    glm::vec3 viewPosLock = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 viewDir{};
+
+    // Projection
+    glm::mat4 projectionMatrix{};
+    glm::mat4 projectionViewMatrix{};
+
     // Sphere
     DescriptorSetLayout DSL_Sphere;
     VertexDescriptor VD_Sphere;
@@ -77,36 +93,10 @@ protected:
     Model M_Sphere;
     Texture T_Sphere{};
     DescriptorSet DS_Sphere;
-
-    // Plane
-    DescriptorSetLayout DSL_Plane;
-    VertexDescriptor VD_Plane;
-    Pipeline P_Plane;
-    Model M_Plane;
-    Texture T_Plane{};
-    DescriptorSet DS_Plane;
-
-    // Border Wall
-    DescriptorSetLayout DSL_Border_Wall;
-    VertexDescriptor VD_Border_Wall;
-    Pipeline P_Border_Wall;
-    Model M_Border_Wall;
-    Texture T_Border_Wall;
-    DescriptorSet DS_Border_Wall;
-
-    // Level 0 Wall
-    DescriptorSetLayout DSL_Level_0_Wall;
-    VertexDescriptor VD_Level_0_Wall;
-    Pipeline P_Level_0_Wall;
-    Model M_Level_0_Wall;
-    Texture T_Level_0_Wall{};
-    DescriptorSet DS_Level_0_Wall;
-
-    // Sphere variables
-    const float sphereRadius = 1.0f;
-    float sphereAccel = 500.0f; //100.0f;
-    float sphereFriction = 0.95f;
     bool sphereJumping = false;
+    float sphereAccel = 200.0f;
+    float sphereFriction = 0.95f;
+    const float sphereRadius = 1.0f;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
     glm::vec3 spherePos = glm::vec3(50.0f, 1.0f, 50.0f);
     glm::vec3 sphereCheckpoint = spherePos;
@@ -117,37 +107,41 @@ protected:
     glm::vec3 sphereRotSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotAccel = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    // Plane variables
+    // Plane
+    DescriptorSetLayout DSL_Plane;
+    VertexDescriptor VD_Plane;
+    Pipeline P_Plane;
+    Model M_Plane;
+    Texture T_Plane{};
+    DescriptorSet DS_Plane;
     float LInt = 50.0f;
     glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
     glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
 
-    // Projection variables
-    glm::mat4 projectionMatrix{};
-    glm::mat4 projectionViewMatrix{};
+    // Border
+    DescriptorSetLayout DSL_Border;
+    VertexDescriptor VD_Border;
+    Pipeline P_Border;
+    Model M_Border;
+    Texture T_Border;
+    DescriptorSet DS_Border;
+    const int borderNum = 4;
 
-    // View variables
-    float viewDistance = 8.0f;
-    float viewHeight = 3.0f;
-    const float viewSpeed = glm::radians(120.0f);
-    float viewAzimuth = 0.0f;
-    float viewElevation = 0.0f;
-    const float viewElevationMax = glm::radians(20.0f);
-    const float viewElevationMin = -glm::radians(25.0f);
-    float Ar{};
-    glm::mat4 viewMatrix{};
-    glm::vec3 viewPos{};
-    glm::vec3 viewPosOld{};
-    glm::vec3 viewPosLock = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 viewDir{};
-
+    // Wall
+    DescriptorSetLayout DSL_Wall;
+    VertexDescriptor VD_Wall;
+    Pipeline P_Wall;
+    Model M_Wall;
+    Texture T_Wall{};
+    DescriptorSet DS_Wall;
+    const int wallNum = 15;
 
     void setWindowParameters() override {
         windowWidth = 800;
         windowHeight = 600;
         windowTitle = "Labyball";
         windowResizable = GLFW_TRUE;
-        initialBackgroundColor = {0.1f, 0.3f, 0.5f, 1.0f};
+        initialBackgroundColor = {0.0f, 0.0f, 0.0f, 1.0f};
         Ar = (float)windowWidth / (float)windowHeight;
     }
 
@@ -156,12 +150,12 @@ protected:
     }
 
     void localInit() override {
-        // Level variables initialization
+        // Map
         mapInit();
 
         // Sphere
         DSL_Sphere.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMatrUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
         VD_Sphere.init(this, {
@@ -170,17 +164,16 @@ protected:
             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SphereVertex, pos),sizeof(glm::vec3), POSITION},
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(SphereVertex, uv),sizeof(glm::vec2), UV},
         });
-        P_Sphere.init(this, &VD_Sphere, "shaders/EmissionVert.spv", "shaders/EmissionFrag.spv", {&DSL_Sphere});
+        P_Sphere.init(this, &VD_Sphere, "shaders/SphereVert.spv", "shaders/SphereFrag.spv", {&DSL_Sphere});
         M_Sphere.init(this, &VD_Sphere, "models/Sphere.gltf", GLTF);
         T_Sphere.init(this, "textures/Sun.jpg");
 
         // Plane
         DSL_Plane.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMatrUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PlaneParamUBO), 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PlanePUBO), 1},
         });
-
         VD_Plane.init(this, {
             {0, sizeof(PlaneVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
@@ -194,41 +187,38 @@ protected:
         T_Plane.init(this, "textures/Grass.jpg");
 
         // Border Wall
-        DSL_Border_Wall.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderWallMatrUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallParamUBO), 1},
+        DSL_Border.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
         });
-
-        VD_Border_Wall.init(this, {
-                {0, sizeof(BorderWallVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+        VD_Border.init(this, {
+            {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderWallVertex, pos), sizeof(glm::vec3), POSITION},
-                {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderWallVertex, uv), sizeof(glm::vec2), UV},
-                {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderWallVertex, norm), sizeof(glm::vec3), NORMAL}
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, pos),  sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderVertex, uv),      sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Border_Wall.init(this, &VD_Border_Wall, "shaders/BorderWallVert.spv", "shaders/BorderWallFrag.spv", {&DSL_Border_Wall});
-        M_Border_Wall.init(this, &VD_Border_Wall, "models/Border.obj", OBJ);
-        T_Border_Wall.init(this, "textures/Bricks.jpg");
+        P_Border.init(this, &VD_Border, "shaders/BorderVert.spv", "shaders/BorderFrag.spv", {&DSL_Border});
+        M_Border.init(this, &VD_Border, "models/Border.obj", OBJ);
+        T_Border.init(this, "textures/Bricks.jpg");
 
         // Level 0 Wall
-        DSL_Level_0_Wall.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(Level0WallMatrUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallParamUBO), 1},
+        DSL_Wall.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,        1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
         });
-
-        VD_Level_0_Wall.init(this, {
-                {0, sizeof(BorderWallVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+        VD_Wall.init(this, {
+            {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Level0WallVertex, pos), sizeof(glm::vec3), POSITION},
-                {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(Level0WallVertex, uv), sizeof(glm::vec2), UV},
-                {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Level0WallVertex, norm), sizeof(glm::vec3), NORMAL}
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, pos),  sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        // TODO: Shader could be the same of the borders, but for now i've mad a shader for level0
-        P_Level_0_Wall.init(this, &VD_Level_0_Wall, "shaders/Level0WallVert.spv", "shaders/Level0WallFrag.spv", {&DSL_Level_0_Wall});
-        M_Level_0_Wall.init(this, &VD_Level_0_Wall, "models/Wall.obj", OBJ);
-        T_Level_0_Wall.init(this, "textures/Bricks.jpg");
+        P_Wall.init(this, &VD_Wall, "shaders/WallVert.spv", "shaders/WallFrag.spv", {&DSL_Wall});
+        M_Wall.init(this, &VD_Wall, "models/Wall.obj", OBJ);
+        T_Wall.init(this, "textures/Bricks.jpg");
 
         // Others
         DPSZs.uniformBlocksInPool = 7;
@@ -312,12 +302,12 @@ protected:
         DS_Plane.init(this, &DSL_Plane, {&T_Plane});
 
         // Border Wall
-        P_Border_Wall.create();
-        DS_Border_Wall.init(this, &DSL_Border_Wall, {&T_Border_Wall});
+        P_Border.create();
+        DS_Border.init(this, &DSL_Border, {&T_Border});
 
         // Border Wall
-        P_Level_0_Wall.create();
-        DS_Level_0_Wall.init(this, &DSL_Border_Wall, {&T_Border_Wall});
+        P_Wall.create();
+        DS_Wall.init(this, &DSL_Border, {&T_Border});
     }
 
     void localCleanup() override {
@@ -336,18 +326,18 @@ protected:
         T_Plane.cleanup();
 
         // Border Wall
-        DSL_Border_Wall.cleanup();
-        VD_Border_Wall.cleanup();
-        P_Border_Wall.destroy();
-        M_Border_Wall.cleanup();
-        T_Border_Wall.cleanup();
+        DSL_Border.cleanup();
+        VD_Border.cleanup();
+        P_Border.destroy();
+        M_Border.cleanup();
+        T_Border.cleanup();
 
         // Level 0 Wall
-        DSL_Level_0_Wall.cleanup();
-        VD_Level_0_Wall.cleanup();
-        P_Level_0_Wall.destroy();
-        M_Level_0_Wall.cleanup();
-        T_Level_0_Wall.cleanup();
+        DSL_Wall.cleanup();
+        VD_Wall.cleanup();
+        P_Wall.destroy();
+        M_Wall.cleanup();
+        T_Wall.cleanup();
 
         // Others
         glfwDestroyWindow(window);
@@ -364,12 +354,12 @@ protected:
         DS_Plane.cleanup();
 
         // Border Wall
-        P_Border_Wall.cleanup();
-        DS_Border_Wall.cleanup();
+        P_Border.cleanup();
+        DS_Border.cleanup();
 
         // Level 0 Wall
-        P_Level_0_Wall.cleanup();
-        DS_Level_0_Wall.cleanup();
+        P_Wall.cleanup();
+        DS_Wall.cleanup();
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
@@ -386,16 +376,16 @@ protected:
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Plane.indices.size()), 1, 0, 0, 0);
 
         // Border Wall
-        P_Border_Wall.bind(commandBuffer);
-        M_Border_Wall.bind(commandBuffer);
-        DS_Border_Wall.bind(commandBuffer, P_Border_Wall, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Border_Wall.indices.size()), BORDER_WALL, 0, 0, 0);
+        P_Border.bind(commandBuffer);
+        M_Border.bind(commandBuffer);
+        DS_Border.bind(commandBuffer, P_Border, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Border.indices.size()), borderNum, 0, 0, 0);
 
         // Level 0 Wall
-        P_Level_0_Wall.bind(commandBuffer);
-        M_Level_0_Wall.bind(commandBuffer);
-        DS_Level_0_Wall.bind(commandBuffer, P_Level_0_Wall, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Level_0_Wall.indices.size()), LEVEL_0_WALL, 0, 0, 0);
+        P_Wall.bind(commandBuffer);
+        M_Wall.bind(commandBuffer);
+        DS_Wall.bind(commandBuffer, P_Wall, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Wall.indices.size()), wallNum, 0, 0, 0);
     }
 
     void updateUniformBuffer(uint32_t currentImage) override {
@@ -480,7 +470,7 @@ protected:
         float z = spherePos.z + viewDistance * glm::cos(viewAzimuth);
         float y = spherePos.y + viewHeight + viewDistance * glm::sin(viewElevation);
 
-        // Check for conflicts with the map obstacles
+        // Collision detection
         if (mapHeight[(int)x][(int)viewPosOld.z] > mapHeight[(int)spherePos.x][(int)spherePos.z]) {
             x = viewPosOld.x;
             viewPosLock.x = 1.0f;
@@ -491,7 +481,7 @@ protected:
         viewPos = glm::vec3(x, y, z);
         viewPosLock = glm::vec3(0.0f);
 
-        // Update
+        // Update matrix
         viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
         viewDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), glm::sin(viewElevation), glm::cos(viewAzimuth)));
     }
@@ -553,73 +543,75 @@ protected:
     }
 
     void updateUBO(uint32_t currentImage) {
-        // Sphere UBO update
-        SphereMatrUBO UBOm_Sphere{};
+        // Sphere
+        SphereMUBO UBOm_Sphere{};
         UBOm_Sphere.mvpMat = projectionViewMatrix * sphereMatrix;
         UBOm_Sphere.mMat = sphereMatrix;
         UBOm_Sphere.nMat = glm::mat4(1.0f);
         DS_Sphere.map(currentImage, &UBOm_Sphere, 0);
 
-        // Plane UBO update
-        PlaneMatrUBO UBOm_Plane{};
+        // Plane
+        PlaneMUBO UBOm_Plane{};
         UBOm_Plane.mvpMat = projectionViewMatrix;
         UBOm_Plane.mMat = glm::mat4(1.0f);
         UBOm_Plane.nMat = glm::mat4(1.0f);
         DS_Plane.map(currentImage, &UBOm_Plane, 0);
 
-        PlaneParamUBO UBOp_Plane{};
+        PlanePUBO UBOp_Plane{};
         UBOp_Plane.lightColor = glm::vec4(LCol, LInt);
         UBOp_Plane.lightPos = spherePos;
         UBOp_Plane.ambientColor = LAmb;
         DS_Plane.map(currentImage, &UBOp_Plane, 2);
 
-        // Border Wall UBO Update
-        BorderWallMatrUBO UBOm_BorderWall{};
-        for (int i = 0; i < BORDER_WALL; i++) {
-            if (i == 0) {
-                // Wall 1: Vertical from (0,0) to (0,1000)
-                UBOm_BorderWall.mMat[i] = glm::translate(glm::mat4(1.0f), glm::vec3(20.0f, 0.0f, 0.0f)) *
-                                          glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            } else if (i == 1) {
-                // Wall 2: Horizontal from (0,1000) to (1000,1000)
-                UBOm_BorderWall.mMat[i] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 980.0f));
-            } else if (i == 2) {
-                // Wall 3: Vertical from (1000,1000) to (1000,0)
-                UBOm_BorderWall.mMat[i] = glm::translate(glm::mat4(1.0f), glm::vec3(1000.0f, 0.0f, 0.0f)) *
-                                          glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            } else if (i == 3) {
-                // Wall 4: Horizontal from (1000,0) to (0,0)
-                UBOm_BorderWall.mMat[i] = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+        // Border
+        BorderMUBO UBOm_Border{};
+        std::ifstream borderJsonFile("jsons/BorderWall.json");
+        nlohmann::json borderJson;
+        borderJsonFile >> borderJson;
+        for (int i = 0; i < borderNum; i++) {
+            glm::vec3 translation = glm::vec3(borderJson["walls"][i]["translation"][0], borderJson["walls"][i]["translation"][1], borderJson["walls"][i]["translation"][2]);
+            bool rotation = float(borderJson["walls"][i]["rotation"]);
+            if (rotation) {
+                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), translation) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            } else {
+                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), translation);
             }
-            UBOm_BorderWall.mvpMat[i] = projectionViewMatrix * UBOm_BorderWall.mMat[i];
-            UBOm_BorderWall.nMat[i] = glm::inverse(glm::transpose(UBOm_BorderWall.mMat[i]));
+            UBOm_Border.mvpMat[i] = projectionViewMatrix * UBOm_Border.mMat[i];
+            UBOm_Border.nMat[i] = glm::mat4(1.0f);
         }
-        DS_Border_Wall.map(currentImage, &UBOm_BorderWall, 0);
+        DS_Border.map(currentImage, &UBOm_Border, 0);
 
-        // Level 0 Wall UBO Update
-        Level0WallMatrUBO UBOm_Level0Wall{};
-        for (int i = 0; i < LEVEL_0_WALL; i++) {
-            // TODO: Get ata from JSON
-            UBOm_Level0Wall.mMat[i] = glm::translate(glm::mat4(1.0f), glm::vec3(200.0f, 0.0f, (i+1)*100.0f))
-                    * glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            UBOm_Level0Wall.mvpMat[i] = projectionViewMatrix * UBOm_Level0Wall.mMat[i];
-            UBOm_Level0Wall.nMat[i] = glm::inverse(glm::transpose(UBOm_Level0Wall.mMat[i]));
+        // Wall
+        WallMUBO UBOm_Wall{};
+        std::ifstream wallJsonFile("jsons/Level0Wall.json");
+        nlohmann::json wallJson;
+        wallJsonFile >> wallJson;
+        for (int i = 0; i < wallNum; ++i) {
+            glm::vec3 translation = glm::vec3(wallJson["walls"][i]["translation"][0], wallJson["walls"][i]["translation"][1], wallJson["walls"][i]["translation"][2]);
+            bool rotation = float(wallJson["walls"][i]["rotation"]);
+            if (rotation) {
+                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), translation) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            } else {
+                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), translation);
+            }
+            UBOm_Wall.mvpMat[i] = projectionViewMatrix * UBOm_Wall.mMat[i];
+            UBOm_Wall.nMat[i] = glm::mat4(1.0f);
         }
-        DS_Level_0_Wall.map(currentImage, &UBOm_Level0Wall, 0);
+        DS_Wall.map(currentImage, &UBOm_Wall, 0);
 
-        WallParamUBO UBOp_Wall{};
+        WallPUBO UBOp_Wall{};
         UBOp_Wall.lightColor = glm::vec4(LCol, LInt);
         UBOp_Wall.lightPos = spherePos;
         UBOp_Wall.ambientColor = LAmb;
-        DS_Border_Wall.map(currentImage, &UBOp_Wall, 2);
-        DS_Level_0_Wall.map(currentImage, &UBOp_Wall, 2);
+        DS_Border.map(currentImage, &UBOp_Wall, 2);
+        DS_Wall.map(currentImage, &UBOp_Wall, 2);
     }
 };
 
 
 
 int main() {
-    Labyball app;
+    Level1 app;
 
     try {
         app.run();
