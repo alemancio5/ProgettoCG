@@ -61,31 +61,6 @@ struct WallVertex {
 class Level1 : public BaseProject {
 protected:
 
-    // Map
-    static const int mapSize = 1000;
-    float mapHeight[mapSize][mapSize];
-    float mapItems[mapSize][mapSize];
-    const float mapGravity = -100.0f;
-
-    // View
-    float viewDistance = 8.0f;
-    float viewHeight = 3.0f;
-    float viewAzimuth = 0.0f;
-    float viewElevation = 0.0f;
-    const float viewSpeed = glm::radians(120.0f);
-    const float viewElevationMax = glm::radians(20.0f);
-    const float viewElevationMin = -glm::radians(25.0f);
-    float Ar{};
-    glm::mat4 viewMatrix{};
-    glm::vec3 viewPos{};
-    glm::vec3 viewPosOld{};
-    glm::vec3 viewPosLock = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 viewDir{};
-
-    // Projection
-    glm::mat4 projectionMatrix{};
-    glm::mat4 projectionViewMatrix{};
-
     // Sphere
     DescriptorSetLayout DSL_Sphere;
     VertexDescriptor VD_Sphere;
@@ -93,14 +68,17 @@ protected:
     Model M_Sphere;
     Texture T_Sphere{};
     DescriptorSet DS_Sphere;
+
     bool sphereJumping = false;
-    float sphereAccel = 100.0f;
+    bool sphereGoingUp = false;
+    float sphereAccel = 200.0f;
+    float sphereJump = 70.0f;
     float sphereFriction = 0.95f;
-    const float sphereRadius = 1.0f;
+    const float sphereRadius = 5.0f;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
-    glm::vec3 spherePos = glm::vec3(50.0f, 1.0f, 50.0f);
-    glm::vec3 sphereCheckpoint = spherePos;
-    glm::vec3 spherePosOld = spherePos;
+    glm::vec3 spherePos{};
+    glm::vec3 sphereCheckpoint{};
+    glm::vec3 spherePosOld{};
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::quat sphereRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -114,6 +92,7 @@ protected:
     Model M_Plane;
     Texture T_Plane{};
     DescriptorSet DS_Plane;
+
     float LInt = 50.0f;
     glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
     glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
@@ -125,6 +104,7 @@ protected:
     Model M_Border;
     Texture T_Border;
     DescriptorSet DS_Border;
+
     const int borderNum = 4;
 
     // Wall
@@ -134,7 +114,34 @@ protected:
     Model M_Wall;
     Texture T_Wall{};
     DescriptorSet DS_Wall;
+
     const int wallNum = 15;
+
+    // Map
+    static const int mapSize = 1000;
+    float mapHeight[mapSize][mapSize];
+    float mapItems[mapSize][mapSize];
+    const float mapGravity = -100.0f;
+    const glm::vec3 mapStartPos = glm::vec3(50.0f, 0.0f, 50.0f);
+
+    // View
+    float viewDistance = 8.0f + sphereRadius;
+    float viewHeight = 3.0f + sphereRadius;
+    float viewAzimuth = 0.0f;
+    float viewElevation = 0.0f;
+    const float viewSpeed = glm::radians(170.0f);
+    const float viewElevationMax = glm::radians(20.0f);
+    const float viewElevationMin = -glm::radians(25.0f);
+    float Ar{};
+    glm::mat4 viewMatrix{};
+    glm::vec3 viewPos{};
+    glm::vec3 viewPosOld{};
+    glm::vec3 viewPosLock = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 viewDir{};
+
+    // Projection
+    glm::mat4 projectionMatrix{};
+    glm::mat4 projectionViewMatrix{};
 
     void setWindowParameters() override {
         windowWidth = 800;
@@ -150,9 +157,6 @@ protected:
     }
 
     void localInit() override {
-        // Map
-        mapInit();
-
         // Sphere
         DSL_Sphere.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMUBO), 1},
@@ -165,8 +169,12 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(SphereVertex, uv),sizeof(glm::vec2), UV},
         });
         P_Sphere.init(this, &VD_Sphere, "shaders/SphereVert.spv", "shaders/SphereFrag.spv", {&DSL_Sphere});
-        M_Sphere.init(this, &VD_Sphere, "models/Sphere.gltf", GLTF);
+        M_Sphere.init(this, &VD_Sphere, "models/Sphere.obj", OBJ);
         T_Sphere.init(this, "textures/Sun.jpg");
+
+        spherePos = mapStartPos + glm::vec3(0.0f, sphereRadius, 0.0f);
+        spherePosOld = spherePos;
+        sphereCheckpoint = spherePos;
 
         // Plane
         DSL_Plane.init(this, {
@@ -219,6 +227,9 @@ protected:
         P_Wall.init(this, &VD_Wall, "shaders/WallVert.spv", "shaders/WallFrag.spv", {&DSL_Wall});
         M_Wall.init(this, &VD_Wall, "models/Wall.obj", OBJ);
         T_Wall.init(this, "textures/Bricks.jpg");
+
+        // Map
+        mapInit();
 
         // Others
         DPSZs.uniformBlocksInPool = 7;
@@ -395,8 +406,8 @@ protected:
             spherePosAccel.z = 0.0f;
         }
         if (fireInput && !sphereJumping) { // Sphere jump
-            spherePosSpeed.y = 60.0f;
-            spherePos.y = spherePosSpeed.y * deltaTime;
+            spherePosSpeed.y = sphereJump;
+            sphereGoingUp = true;
             sphereJumping = true;
         }
         if (rotationInput.z == -1.0f) {
@@ -458,7 +469,14 @@ protected:
 
     void updateSphereVariables(float deltaTime) {
         // Update position in y
-        if (spherePos.y > mapHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
+        if (sphereGoingUp) {
+            spherePosSpeed.y = sphereJump;
+            spherePos.y += spherePosSpeed.y * deltaTime;
+            if (spherePos.y > 2 * sphereRadius) {
+                sphereGoingUp = false;
+            }
+        }
+        else if (spherePos.y > mapHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
             spherePosAccel.y = mapGravity;
             spherePosSpeed.y += spherePosAccel.y * deltaTime;
             spherePos.y += spherePosSpeed.y * deltaTime;
