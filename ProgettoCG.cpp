@@ -3,7 +3,7 @@
 
 
 
-// Uniform Buffer Object structs
+// UBO structs
 struct SphereMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
@@ -94,7 +94,7 @@ protected:
     Texture T_Sphere{};
     DescriptorSet DS_Sphere;
     bool sphereJumping = false;
-    float sphereAccel = 200.0f;
+    float sphereAccel = 100.0f;
     float sphereFriction = 0.95f;
     const float sphereRadius = 1.0f;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
@@ -228,66 +228,36 @@ protected:
 
     void mapInit() {
         // Height initialization
-        for (int i = 0; i < mapSize; i++) { // Ground
-            for (int j = 0; j < mapSize; j++) {
-                mapHeight[i][j] = 0.0f;
-            }
-        }
-        for (int i = 0; i < 1000; i++) { // Wall #1
-            for (int j = 0; j < 20; j++) {
-                mapHeight[i][j] = 40.0f;
-            }
-        }
-        for (int i = 0; i < 1000; i++) { // Wall #2
-            for (int j = 980; j < 1000; j++) {
-                mapHeight[i][j] = 40.0f;
-            }
-        }
-        for (int i = 0; i < 20; i++) { // Wall #3
-            for (int j = 0; j < 1000; j++) {
-                mapHeight[i][j] = 40.0f;
-            }
-        }
-        for (int i = 980; i < 1000; i++) { // Wall #4
-            for (int j = 0; j < 1000; j++) {
-                mapHeight[i][j] = 40.0f;
+        std::ifstream heightJsonFile("jsons/Height.json");
+        nlohmann::json heightJson;
+        heightJsonFile >> heightJson;
+        for (const auto& loop : heightJson["loops"]) {
+            int iStart = loop["i"]["start"];
+            int iEnd = loop["i"]["end"];
+            int jStart = loop["j"]["start"];
+            int jEnd = loop["j"]["end"];
+            float height = loop["height"];
+            for (int i = iStart; i < iEnd; i++) {
+                for (int j = jStart; j < jEnd; j++) {
+                    mapHeight[i][j] = height;
+                }
             }
         }
 
         // Items initialization
-        for (int i = 0; i < mapSize; i++) { // No items
-            for (int j = 0; j < mapSize; j++) {
-                mapItems[i][j] = 0.0f;
-            }
-        }
-        for (int i = 40; i < 60; i++) { // Checkpoint #1
-            for (int j = 40; j < 60; j++) {
-                mapItems[i][j] = 1.0f;
-            }
-        }
-        for (int i = 790; i < 810; i++) { // Checkpoint #2
-            for (int j = 490; j < 510; j++) {
-                mapItems[i][j] = 1.0f;
-            }
-        }
-        for (int i = 330; i < 350; i++) { // Checkpoint #3
-            for (int j = 710; j < 730; j++) {
-                mapItems[i][j] = 1.0f;
-            }
-        }
-        for (int i = 660; i < 680; i++) { // Super Speed #1
-            for (int j = 140; j < 160; j++) {
-                mapItems[i][j] = 2.0f;
-            }
-        }
-        for (int i = 940; i < 960; i++) { // Super View #1
-            for (int j = 760; j < 780; j++) {
-                mapItems[i][j] = 3.0f;
-            }
-        }
-        for (int i = 900; i < 920; i++) { // Win #1
-            for (int j = 900; j < 920; j++) {
-                mapItems[i][j] = 4.0f;
+        std::ifstream itemsJsonFile("jsons/Items.json");
+        nlohmann::json itemsJson;
+        itemsJsonFile >> itemsJson;
+        for (const auto& loop : itemsJson["loops"]) {
+            int iStart = loop["i"]["start"].is_string() ? mapSize : loop["i"]["start"].get<int>();
+            int iEnd = loop["i"]["end"].is_string() ? mapSize : loop["i"]["end"].get<int>();
+            int jStart = loop["j"]["start"].is_string() ? mapSize : loop["j"]["start"].get<int>();
+            int jEnd = loop["j"]["end"].is_string() ? mapSize : loop["j"]["end"].get<int>();
+            float items = loop["items"];
+            for (int i = iStart; i < iEnd; i++) {
+                for (int j = jStart; j < jEnd; j++) {
+                    mapItems[i][j] = items;
+                }
             }
         }
     }
@@ -435,7 +405,7 @@ protected:
                 std::cout << "Checkpoint saved: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
             if (mapItems[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
-                sphereAccel = 200.0f;
+                sphereAccel = 150.0f;
                 std::cout << "Super Speed taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
             if (mapItems[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
@@ -565,7 +535,7 @@ protected:
 
         // Border
         BorderMUBO UBOm_Border{};
-        std::ifstream borderJsonFile("jsons/BorderWall.json");
+        std::ifstream borderJsonFile("jsons/Border.json");
         nlohmann::json borderJson;
         borderJsonFile >> borderJson;
         for (int i = 0; i < borderNum; i++) {
@@ -583,7 +553,7 @@ protected:
 
         // Wall
         WallMUBO UBOm_Wall{};
-        std::ifstream wallJsonFile("jsons/Level0Wall.json");
+        std::ifstream wallJsonFile("jsons/Wall.json");
         nlohmann::json wallJson;
         wallJsonFile >> wallJson;
         for (int i = 0; i < wallNum; ++i) {

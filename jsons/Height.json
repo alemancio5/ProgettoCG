@@ -1,0 +1,64 @@
+{
+  "loops": [
+    {
+      "description": "Ground",
+      "i": {
+        "start": 0,
+        "end": 1000
+      },
+      "j": {
+        "start": 0,
+        "end": 1000
+      },
+      "height": 0.0
+    },
+    {
+      "description": "Border #1",
+      "i": {
+        "start": 0,
+        "end": 1000
+      },
+      "j": {
+        "start": 0,
+        "end": 20
+      },
+      "height": 40.0
+    },
+    {
+      "description": "Border #2",
+      "i": {
+        "start": 0,
+        "end": 1000
+      },
+      "j": {
+        "start": 980,
+        "end": 1000
+      },
+      "height": 40.0
+    },
+    {
+      "description": "Border #3",
+      "i": {
+        "start": 0,
+        "end": 20
+      },
+      "j": {
+        "start": 0,
+        "end": 1000
+      },
+      "height": 40.0
+    },
+    {
+      "description": "Border #4",
+      "i": {
+        "start": 980,
+        "end": 1000
+      },
+      "j": {
+        "start": 0,
+        "end": 1000
+      },
+      "height": 40.0
+    }
+  ]
+}
