@@ -592,3 +592,6 @@ int main() {
 
     return EXIT_SUCCESS;
 }
+
+
+// TODO Aggiustare che veloce sale sui muri
