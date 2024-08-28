@@ -14,7 +14,7 @@ layout(location = 1) out vec3 fragPos;
 layout(location = 2) out vec3 fragNormal;
 
 void main() {
-    fragUV = inUV;
+    fragUV = inUV * vec2(12, 18);
     fragPos = vec3(ubo.mMat * vec4(inPos, 1.0));
     fragNormal = normalize(mat3(transpose(inverse(ubo.mMat))) * inNormal);
     gl_Position = ubo.mvpMat * vec4(inPos, 1.0);
