@@ -183,7 +183,7 @@ protected:
                 {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
         });
         P_Wall.init(this, &VD_Wall, "shaders/PlaneVert.spv", "shaders/PlaneFrag.spv", {&DSL_Wall});
-        M_Wall.init(this, &VD_Wall, "models/Walls.obj", OBJ);
+        M_Wall.init(this, &VD_Wall, "models/Border.obj", OBJ);
         T_Wall.init(this, "textures/Bricks.jpg");
 
         // Others
@@ -194,7 +194,7 @@ protected:
 
     void mapInit() {
         // Height initialization
-        for (int i = 0; i < mapSize; i++) { // Plane
+        for (int i = 0; i < mapSize; i++) { // Ground
             for (int j = 0; j < mapSize; j++) {
                 mapHeight[i][j] = 0.0f;
             }
@@ -219,14 +219,9 @@ protected:
                 mapHeight[i][j] = 40.0f;
             }
         }
-        for (int i = 0; i < 600; i++) { // Wall #5
-            for (int j = 80; j < 120; j++) {
-                mapHeight[i][j] = 40.0f;
-            }
-        }
 
         // Items initialization
-        for (int i = 0; i < mapSize; i++) {
+        for (int i = 0; i < mapSize; i++) { // No items
             for (int j = 0; j < mapSize; j++) {
                 mapItems[i][j] = 0.0f;
             }
@@ -254,6 +249,11 @@ protected:
         for (int i = 940; i < 960; i++) { // Super View #1
             for (int j = 760; j < 780; j++) {
                 mapItems[i][j] = 3.0f;
+            }
+        }
+        for (int i = 900; i < 920; i++) { // Win #1
+            for (int j = 900; j < 920; j++) {
+                mapItems[i][j] = 4.0f;
             }
         }
     }
@@ -387,6 +387,9 @@ protected:
                 viewDistance = 20.0f + sphereRadius;
                 viewHeight = 15.0f + sphereRadius;
                 std::cout << "Super View taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
+            }
+            if (mapItems[(int)spherePos.x][(int)spherePos.z] == 4.0f) {
+                std::cout << "Win taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
         }
 
