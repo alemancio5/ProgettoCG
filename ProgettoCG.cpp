@@ -1,9 +1,10 @@
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
 
-// Global variables
+// Map variables
 const int mapSize = 1000.0f;
-float mapLevel[mapSize][mapSize];
+float mapHeight[mapSize][mapSize];
+float mapItems[mapSize][mapSize];
 const float mapGravity = -100.0f;
 
 // Uniform Buffer Object structs
@@ -79,11 +80,12 @@ protected:
 
     // Sphere variables
     const float sphereRadius = 1.0f;
-    const float sphereAccel = 100.0f;
+    float sphereAccel = 100.0f;
     float sphereFriction = 0.95f;
     bool sphereJumping = false;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
-    glm::vec3 spherePos = glm::vec3(30.0f, 1.0f, 30.0f);
+    glm::vec3 spherePos = glm::vec3(50.0f, 1.0f, 50.0f);
+    glm::vec3 sphereCheckpoint = spherePos;
     glm::vec3 spherePosOld = spherePos;
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -101,8 +103,8 @@ protected:
     glm::mat4 projectionViewMatrix{};
 
     // View variables
-    const float viewDistance = 8.0f;
-    const float viewHeight = 3.0f;
+    float viewDistance = 8.0f;
+    float viewHeight = 3.0f;
     const float viewSpeed = glm::radians(120.0f);
     float viewAzimuth = 0.0f;
     float viewElevation = 0.0f;
@@ -129,37 +131,8 @@ protected:
     }
 
     void localInit() override {
-        // Global variables initialization
-        for (int i = 0; i < mapSize; i++) { // Plane
-            for (int j = 0; j < mapSize; j++) {
-                mapLevel[i][j] = 0.0f;
-            }
-        }
-        for (int i = 0; i < 1000; i++) { // Wall #1
-            for (int j = 0; j < 20; j++) {
-                mapLevel[i][j] = 40.0f;
-            }
-        }
-        for (int i = 0; i < 1000; i++) { // Wall #2
-            for (int j = 980; j < 1000; j++) {
-                mapLevel[i][j] = 40.0f;
-            }
-        }
-        for (int i = 0; i < 20; i++) { // Wall #3
-            for (int j = 0; j < 1000; j++) {
-                mapLevel[i][j] = 40.0f;
-            }
-        }
-        for (int i = 980; i < 1000; i++) { // Wall #4
-            for (int j = 0; j < 1000; j++) {
-                mapLevel[i][j] = 40.0f;
-            }
-        }
-        for (int i = 0; i < 600; i++) { // Wall #5
-            for (int j = 80; j < 120; j++) {
-                mapLevel[i][j] = 40.0f;
-            }
-        }
+        // Level variables initialization
+        mapInit();
 
         // Sphere
         DSL_Sphere.init(this, {
@@ -217,6 +190,72 @@ protected:
         DPSZs.uniformBlocksInPool = 2 + 1 + 2;
         DPSZs.texturesInPool = 3;
         DPSZs.setsInPool = 3;
+    }
+
+    void mapInit() {
+        // Height initialization
+        for (int i = 0; i < mapSize; i++) { // Plane
+            for (int j = 0; j < mapSize; j++) {
+                mapHeight[i][j] = 0.0f;
+            }
+        }
+        for (int i = 0; i < 1000; i++) { // Wall #1
+            for (int j = 0; j < 20; j++) {
+                mapHeight[i][j] = 40.0f;
+            }
+        }
+        for (int i = 0; i < 1000; i++) { // Wall #2
+            for (int j = 980; j < 1000; j++) {
+                mapHeight[i][j] = 40.0f;
+            }
+        }
+        for (int i = 0; i < 20; i++) { // Wall #3
+            for (int j = 0; j < 1000; j++) {
+                mapHeight[i][j] = 40.0f;
+            }
+        }
+        for (int i = 980; i < 1000; i++) { // Wall #4
+            for (int j = 0; j < 1000; j++) {
+                mapHeight[i][j] = 40.0f;
+            }
+        }
+        for (int i = 0; i < 600; i++) { // Wall #5
+            for (int j = 80; j < 120; j++) {
+                mapHeight[i][j] = 40.0f;
+            }
+        }
+
+        // Items initialization
+        for (int i = 0; i < mapSize; i++) {
+            for (int j = 0; j < mapSize; j++) {
+                mapItems[i][j] = 0.0f;
+            }
+        }
+        for (int i = 40; i < 60; i++) { // Checkpoint #1
+            for (int j = 40; j < 60; j++) {
+                mapItems[i][j] = 1.0f;
+            }
+        }
+        for (int i = 790; i < 810; i++) { // Checkpoint #2
+            for (int j = 490; j < 510; j++) {
+                mapItems[i][j] = 1.0f;
+            }
+        }
+        for (int i = 330; i < 350; i++) { // Checkpoint #3
+            for (int j = 710; j < 730; j++) {
+                mapItems[i][j] = 1.0f;
+            }
+        }
+        for (int i = 660; i < 680; i++) { // Super Speed #1
+            for (int j = 140; j < 160; j++) {
+                mapItems[i][j] = 2.0f;
+            }
+        }
+        for (int i = 940; i < 960; i++) { // Super View #1
+            for (int j = 760; j < 780; j++) {
+                mapItems[i][j] = 3.0f;
+            }
+        }
     }
 
     void pipelinesAndDescriptorSetsInit() override {
@@ -335,6 +374,21 @@ protected:
             spherePos.y = spherePosSpeed.y * deltaTime;
             sphereJumping = true;
         }
+        if (rotationInput.z == -1.0f) {
+            if (mapItems[(int)spherePos.x][(int)spherePos.z] == 1.0f) {
+                sphereCheckpoint = spherePos;
+                std::cout << "Checkpoint saved: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
+            }
+            if (mapItems[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
+                sphereAccel = 200.0f;
+                std::cout << "Super Speed taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
+            }
+            if (mapItems[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
+                viewDistance = 20.0f + sphereRadius;
+                viewHeight = 15.0f + sphereRadius;
+                std::cout << "Super View taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
+            }
+        }
 
         // View variables update
         updateViewVariables();
@@ -359,10 +413,10 @@ protected:
         float y = spherePos.y + viewHeight + viewDistance * glm::sin(viewElevation);
 
         // Check for conflicts with the map obstacles
-        if (mapLevel[(int)x][(int)viewPosOld.z] > mapLevel[(int)spherePos.x][(int)spherePos.z]) {
+        if (mapHeight[(int)x][(int)viewPosOld.z] > mapHeight[(int)spherePos.x][(int)spherePos.z]) {
             x = viewPosOld.x;
             viewPosLock.x = 1.0f;
-        } else if (mapLevel[(int)viewPosOld.x][(int)z] > mapLevel[(int)spherePos.x][(int)spherePos.z]) {
+        } else if (mapHeight[(int)viewPosOld.x][(int)z] > mapHeight[(int)spherePos.x][(int)spherePos.z]) {
             z = viewPosOld.z;
             viewPosLock.z = 1.0f;
         }
@@ -376,7 +430,7 @@ protected:
 
     void updateSphereVariables(float deltaTime) {
         // Update position in y
-        if (spherePos.y > mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
+        if (spherePos.y > mapHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
             spherePosAccel.y = mapGravity;
             spherePosSpeed.y += spherePosAccel.y * deltaTime;
             spherePos.y += spherePosSpeed.y * deltaTime;
@@ -385,7 +439,7 @@ protected:
         else {
             spherePosAccel.y = 0.0f;
             spherePosSpeed.y = 0.0f;
-            spherePos.y = mapLevel[(int)spherePos.x][(int)spherePos.z] + sphereRadius;
+            spherePos.y = mapHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius;
             sphereJumping = false;
         }
 
@@ -399,19 +453,19 @@ protected:
         spherePosSpeed.z *= sphereFriction;
 
         // Collision detection
-        if (mapLevel[(int)(spherePos.x + sphereRadius)][(int)(spherePosOld.z)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
+        if (mapHeight[(int)(spherePos.x + sphereRadius)][(int)(spherePosOld.z)] > mapHeight[(int)(spherePos.x)][(int)(spherePos.z)]) {
             if (spherePosSpeed.x >= 0.0f)
                 spherePos.x = spherePosOld.x;
         }
-        else if (mapLevel[(int)(spherePos.x - sphereRadius)][(int)(spherePosOld.z)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
+        else if (mapHeight[(int)(spherePos.x - sphereRadius)][(int)(spherePosOld.z)] > mapHeight[(int)(spherePos.x)][(int)(spherePos.z)]) {
             if (spherePosSpeed.x <= 0.0f)
                 spherePos.x = spherePosOld.x;
         }
-        if (mapLevel[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
+        if (mapHeight[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > mapHeight[(int)(spherePos.x)][(int)(spherePos.z)]) {
             if (spherePosSpeed.z >= 0.0f)
                 spherePos.z = spherePosOld.z;
         }
-        else if (mapLevel[(int)(spherePos.x)][(int)(spherePosOld.z - sphereRadius)] > mapLevel[(int)(spherePos.x)][(int)(spherePos.z)]) {
+        else if (mapHeight[(int)(spherePos.x)][(int)(spherePosOld.z - sphereRadius)] > mapHeight[(int)(spherePos.x)][(int)(spherePos.z)]) {
             if (spherePosSpeed.z <= 0.0f)
                 spherePos.z = spherePosOld.z;
         }
