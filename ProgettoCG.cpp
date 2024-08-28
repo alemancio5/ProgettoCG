@@ -111,6 +111,8 @@ protected:
     float Ar{};
     glm::mat4 viewMatrix{};
     glm::vec3 viewPos{};
+    glm::vec3 viewPosOld{};
+    glm::vec3 viewPosLock = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 viewDir{};
 
     void setWindowParameters() override {
@@ -305,9 +307,11 @@ protected:
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
         if (movementInput.x == -1.0f || rotationInput.y == -1.0f) { // View left
-            viewAzimuth += viewSpeed * deltaTime;
+            if (!viewPosLock.x)
+                viewAzimuth += viewSpeed * deltaTime;
         } else if (movementInput.x == 1.0f || rotationInput.y == 1.0f) { // View right
-            viewAzimuth -= viewSpeed * deltaTime;
+            if (!viewPosLock.z)
+                viewAzimuth -= viewSpeed * deltaTime;
         }
         if (rotationInput.x == -1.0f) { // View up
             viewElevation -= viewSpeed * deltaTime;
@@ -348,10 +352,24 @@ protected:
     }
 
     void updateViewVariables() {
+        // Compute the new view position
+        viewPosOld = viewPos;
         float x = spherePos.x + viewDistance * glm::sin(viewAzimuth);
         float z = spherePos.z + viewDistance * glm::cos(viewAzimuth);
         float y = spherePos.y + viewHeight + viewDistance * glm::sin(viewElevation);
+
+        // Check for conflicts with the map obstacles
+        if (mapLevel[(int)x][(int)viewPosOld.z] > mapLevel[(int)spherePos.x][(int)spherePos.z]) {
+            x = viewPosOld.x;
+            viewPosLock.x = 1.0f;
+        } else if (mapLevel[(int)viewPosOld.x][(int)z] > mapLevel[(int)spherePos.x][(int)spherePos.z]) {
+            z = viewPosOld.z;
+            viewPosLock.z = 1.0f;
+        }
         viewPos = glm::vec3(x, y, z);
+        viewPosLock = glm::vec3(0.0f);
+
+        // Update
         viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
         viewDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), glm::sin(viewElevation), glm::cos(viewAzimuth)));
     }
