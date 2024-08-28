@@ -72,6 +72,7 @@ protected:
     bool sphereJumping = false;
     bool sphereGoingUp = false;
     float sphereAccel = 200.0f;
+    float sphereAccelSuper = 250.0f;
     float sphereJump = 70.0f;
     float sphereFriction = 0.95f;
     const float sphereRadius = 5.0f;
@@ -121,12 +122,14 @@ protected:
     static const int mapSize = 1000;
     float mapHeight[mapSize][mapSize];
     float mapItems[mapSize][mapSize];
-    const float mapGravity = -100.0f;
+    const float mapGravity = -150.0f;
     const glm::vec3 mapStartPos = glm::vec3(50.0f, 0.0f, 50.0f);
 
     // View
-    float viewDistance = 8.0f + sphereRadius;
-    float viewHeight = 3.0f + sphereRadius;
+    float viewDistance = 15.0f + sphereRadius;
+    float viewDistanceSuper = 30.0f + sphereRadius;
+    float viewHeight = 10.0f + sphereRadius;
+    float viewHeightSuper = 20.0f + sphereRadius;
     float viewAzimuth = 0.0f;
     float viewElevation = 0.0f;
     const float viewSpeed = glm::radians(170.0f);
@@ -416,12 +419,12 @@ protected:
                 std::cout << "Checkpoint saved: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
             if (mapItems[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
-                sphereAccel = 150.0f;
+                sphereAccel = sphereAccelSuper;
                 std::cout << "Super Speed taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
             if (mapItems[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
-                viewDistance = 20.0f + sphereRadius;
-                viewHeight = 15.0f + sphereRadius;
+                viewDistance = viewDistanceSuper;
+                viewHeight = viewHeightSuper;
                 std::cout << "Super View taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
             if (mapItems[(int)spherePos.x][(int)spherePos.z] == 4.0f) {
@@ -613,3 +616,4 @@ int main() {
 
 
 // TODO Aggiustare che veloce sale sui muri
+// TODO Muri che lampeggiano (penso sia un problema di shader)
