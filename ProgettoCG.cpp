@@ -68,6 +68,7 @@ protected:
     Model M_Sphere;
     Texture T_Sphere{};
     DescriptorSet DS_Sphere;
+    SphereMUBO UBOm_Sphere{};
 
     bool sphereJumping = false;
     bool sphereGoingUp = false;
@@ -93,6 +94,8 @@ protected:
     Model M_Plane;
     Texture T_Plane{};
     DescriptorSet DS_Plane;
+    PlaneMUBO UBOm_Plane{};
+    PlanePUBO UBOp_Plane{};
 
     float LInt = 50.0f;
     glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
@@ -105,6 +108,7 @@ protected:
     Model M_Border;
     Texture T_Border;
     DescriptorSet DS_Border;
+    BorderMUBO UBOm_Border;
 
     const int borderNum = 4;
 
@@ -115,6 +119,8 @@ protected:
     Model M_Wall;
     Texture T_Wall{};
     DescriptorSet DS_Wall;
+    WallMUBO UBOm_Wall{};
+    WallPUBO UBOp_Wall{};
 
     const int wallNum = 15;
 
@@ -197,7 +203,7 @@ protected:
         M_Plane.init(this, &VD_Plane, "models/Plane.obj", OBJ);
         T_Plane.init(this, "textures/Grass.jpg");
 
-        // Border Wall
+        // Border
         DSL_Border.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -214,7 +220,21 @@ protected:
         M_Border.init(this, &VD_Border, "models/Border.obj", OBJ);
         T_Border.init(this, "textures/Bricks.jpg");
 
-        // Level 0 Wall
+        std::ifstream borderJsonFile("jsons/Border.json");
+        nlohmann::json borderJson;
+        borderJsonFile >> borderJson;
+        for (int i = 0; i < borderNum; i++) {
+            glm::vec3 translation = glm::vec3(borderJson["walls"][i]["translation"][0], borderJson["walls"][i]["translation"][1], borderJson["walls"][i]["translation"][2]);
+            bool rotation = float(borderJson["walls"][i]["rotation"]);
+            if (rotation) {
+                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), translation) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            } else {
+                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), translation);
+            }
+            UBOm_Border.nMat[i] = glm::transpose(glm::inverse(UBOm_Border.mMat[i]));
+        }
+
+        // Wall
         DSL_Wall.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,        1},
@@ -230,6 +250,20 @@ protected:
         P_Wall.init(this, &VD_Wall, "shaders/WallVert.spv", "shaders/WallFrag.spv", {&DSL_Wall});
         M_Wall.init(this, &VD_Wall, "models/Wall.obj", OBJ);
         T_Wall.init(this, "textures/Bricks.jpg");
+
+        std::ifstream wallJsonFile("jsons/Wall.json");
+        nlohmann::json wallJson;
+        wallJsonFile >> wallJson;
+        for (int i = 0; i < wallNum; ++i) {
+            glm::vec3 translation = glm::vec3(wallJson["walls"][i]["translation"][0], wallJson["walls"][i]["translation"][1], wallJson["walls"][i]["translation"][2]);
+            bool rotation = float(wallJson["walls"][i]["rotation"]);
+            if (rotation) {
+                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), translation) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            } else {
+                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), translation);
+            }
+            UBOm_Wall.nMat[i] = glm::transpose(glm::inverse(UBOm_Wall.mMat[i]));
+        }
 
         // Map
         mapInit();
@@ -535,62 +569,40 @@ protected:
 
     void updateUBO(uint32_t currentImage) {
         // Sphere
-        SphereMUBO UBOm_Sphere{};
         UBOm_Sphere.mvpMat = projectionViewMatrix * sphereMatrix;
         UBOm_Sphere.mMat = sphereMatrix;
-        UBOm_Sphere.nMat = glm::mat4(1.0f);
+        UBOm_Sphere.nMat = glm::transpose(glm::inverse(UBOm_Sphere.mMat));
         DS_Sphere.map(currentImage, &UBOm_Sphere, 0);
 
         // Plane
-        PlaneMUBO UBOm_Plane{};
         UBOm_Plane.mvpMat = projectionViewMatrix;
         UBOm_Plane.mMat = glm::mat4(1.0f);
-        UBOm_Plane.nMat = glm::mat4(1.0f);
+        UBOm_Plane.nMat = glm::transpose(glm::inverse(UBOm_Plane.mMat));
         DS_Plane.map(currentImage, &UBOm_Plane, 0);
 
-        PlanePUBO UBOp_Plane{};
         UBOp_Plane.lightColor = glm::vec4(LCol, LInt);
         UBOp_Plane.lightPos = spherePos;
         UBOp_Plane.ambientColor = LAmb;
         DS_Plane.map(currentImage, &UBOp_Plane, 2);
 
         // Border
-        BorderMUBO UBOm_Border{};
         std::ifstream borderJsonFile("jsons/Border.json");
         nlohmann::json borderJson;
         borderJsonFile >> borderJson;
         for (int i = 0; i < borderNum; i++) {
-            glm::vec3 translation = glm::vec3(borderJson["walls"][i]["translation"][0], borderJson["walls"][i]["translation"][1], borderJson["walls"][i]["translation"][2]);
-            bool rotation = float(borderJson["walls"][i]["rotation"]);
-            if (rotation) {
-                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), translation) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            } else {
-                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), translation);
-            }
             UBOm_Border.mvpMat[i] = projectionViewMatrix * UBOm_Border.mMat[i];
-            UBOm_Border.nMat[i] = glm::mat4(1.0f);
         }
         DS_Border.map(currentImage, &UBOm_Border, 0);
 
         // Wall
-        WallMUBO UBOm_Wall{};
         std::ifstream wallJsonFile("jsons/Wall.json");
         nlohmann::json wallJson;
         wallJsonFile >> wallJson;
         for (int i = 0; i < wallNum; ++i) {
-            glm::vec3 translation = glm::vec3(wallJson["walls"][i]["translation"][0], wallJson["walls"][i]["translation"][1], wallJson["walls"][i]["translation"][2]);
-            bool rotation = float(wallJson["walls"][i]["rotation"]);
-            if (rotation) {
-                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), translation) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            } else {
-                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), translation);
-            }
             UBOm_Wall.mvpMat[i] = projectionViewMatrix * UBOm_Wall.mMat[i];
-            UBOm_Wall.nMat[i] = glm::mat4(1.0f);
         }
         DS_Wall.map(currentImage, &UBOm_Wall, 0);
 
-        WallPUBO UBOp_Wall{};
         UBOp_Wall.lightColor = glm::vec4(LCol, LInt);
         UBOp_Wall.lightPos = spherePos;
         UBOp_Wall.ambientColor = LAmb;
