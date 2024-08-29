@@ -1,62 +1,77 @@
 {
   "walls": [
     {
+      "description": "Wall #1",
       "translation": [200.0, 20.0, 100.0],
       "rotation": false
     },
     {
+      "description": "Wall #2",
       "translation": [560.0, 20.0, 100.0],
       "rotation": false
     },
     {
+      "description": "Wall #3",
       "translation": [900.0, 20.0, 260.0],
       "rotation": true
     },
     {
+      "description": "Wall #4",
       "translation": [900.0, 20.0, 620.0],
       "rotation": true
     },
     {
+      "description": "Wall #5",
       "translation": [800.0, 20.0, 820.0],
       "rotation": false
     },
     {
+      "description": "Wall #6",
       "translation": [440.0, 20.0, 820.0],
       "rotation": false
     },
     {
+      "description": "Wall #7",
       "translation": [720.0, 20.0, 300.0],
       "rotation": true
     },
     {
+      "description": "Wall #8",
       "translation": [600.0, 20.0, 500.0],
       "rotation": false
     },
     {
+      "description": "Wall #9",
       "translation": [300.0, 20.0, 300.0],
       "rotation": true
     },
     {
+      "description": "Wall #10",
       "translation": [340.0, 20.0, 520.0],
       "rotation": true
     },
     {
+      "description": "Wall #11",
       "translation": [540.0, 20.0, 660.0],
       "rotation": false
     },
     {
+      "description": "Wall #12",
       "translation": [370.0, 20.0, 320.0],
       "rotation": false
     },
     {
+      "description": "Wall #13",
       "translation": [600.0, 20.0, 200.0],
       "rotation": false
     },
     {
+      "description": "Wall #14",
       "translation": [100.0, 20.0, 300.0],
       "rotation": true
     },
     {
+      "description": "Wall #15",
       "translation": [100.0, 20.0, 660.0],
       "rotation": true
     }

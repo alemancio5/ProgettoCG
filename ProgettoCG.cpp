@@ -616,4 +616,4 @@ int main() {
 
 
 // TODO Aggiustare che veloce sale sui muri
-// TODO Muri che lampeggiano (penso sia un problema di shader)
+// TODO Muri che lampeggiano (è un problema di shader)

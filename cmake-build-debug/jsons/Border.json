@@ -1,18 +1,22 @@
 {
   "walls": [
     {
+      "description": "Border #1",
       "translation": [500.0, 20.0, 10.0],
       "rotation": false
     },
     {
+      "description": "Border #2",
       "translation": [500.0, 20.0, 990.0],
       "rotation": false
     },
     {
+      "description": "Border #3",
       "translation": [10.0, 20.0, 500.0],
       "rotation": true
     },
     {
+      "description": "Border #4",
       "translation": [990.0, 20.0, 500.0],
       "rotation": true
     }

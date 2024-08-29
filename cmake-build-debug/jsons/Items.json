@@ -1,14 +1,14 @@
 {
   "loops": [
     {
-      "description": "No items",
+      "description": "Ground",
       "i": {
         "start": 0,
-        "end": "mapSize"
+        "end": 1000
       },
       "j": {
         "start": 0,
-        "end": "mapSize"
+        "end": 1000
       },
       "items": 0.0
     },
