@@ -20,9 +20,9 @@ struct PlanePUBO {
     alignas(4) glm::vec3 lightColor;
 };
 struct ItemMUBO {
-    alignas(16) glm::mat4 mvpMat[10];
-    alignas(16) glm::mat4 mMat[10];
-    alignas(16) glm::mat4 nMat[10];
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
 };
 struct ItemPUBO {
     alignas(4) glm::vec3 ambientColor;
@@ -30,14 +30,14 @@ struct ItemPUBO {
     alignas(4) glm::vec3 lightColor;
 };
 struct BorderMUBO {
-    alignas(16) glm::mat4 mvpMat[10];
-    alignas(16) glm::mat4 mMat[10];
-    alignas(16) glm::mat4 nMat[10];
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
 };
 struct WallMUBO {
-    alignas(16) glm::mat4 mvpMat[30];
-    alignas(16) glm::mat4 mMat[30];
-    alignas(16) glm::mat4 nMat[30];
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
 };
 struct WallPUBO {
     alignas(4) glm::vec3 ambientColor;
@@ -126,8 +126,6 @@ protected:
     ItemMUBO UBOm_Item{};
     ItemPUBO UBOp_Item{};
 
-    const int itemNum = 6;
-
     // Border
     DescriptorSetLayout DSL_Border;
     VertexDescriptor VD_Border;
@@ -136,8 +134,6 @@ protected:
     Texture T_Border;
     DescriptorSet DS_Border;
     BorderMUBO UBOm_Border;
-
-    const int borderNum = 4;
 
     // Wall
     DescriptorSetLayout DSL_Wall;
@@ -148,8 +144,6 @@ protected:
     DescriptorSet DS_Wall;
     WallMUBO UBOm_Wall{};
     WallPUBO UBOp_Wall{};
-
-    const int wallNum = 15;
 
     // Map
     static const int mapSize = 1000;
@@ -248,15 +242,6 @@ protected:
         M_Item.init(this, &VD_Item, "models/Item.obj", OBJ);
         T_Item.init(this, "textures/Bricks.jpg");
 
-        std::ifstream itemJsonFile("jsons/Item.json");
-        nlohmann::json itemJson;
-        itemJsonFile >> itemJson;
-        for (int i = 0; i < itemNum; i++) {
-            glm::vec3 t = glm::vec3(itemJson["items"][i]["translation"][0], itemJson["items"][i]["translation"][1], itemJson["items"][i]["translation"][2]);
-            UBOm_Item.mMat[i] = glm::translate(glm::mat4(1.0f), t);
-            UBOm_Item.nMat[i] = glm::transpose(glm::inverse(UBOm_Item.mMat[i]));
-        }
-
         // Border
         DSL_Border.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
@@ -274,21 +259,6 @@ protected:
         M_Border.init(this, &VD_Border, "models/Border.obj", OBJ);
         T_Border.init(this, "textures/Bricks.jpg");
 
-
-        std::ifstream borderJsonFile("jsons/Border.json");
-        nlohmann::json borderJson;
-        borderJsonFile >> borderJson;
-        for (int i = 0; i < borderNum; i++) {
-            glm::vec3 t = glm::vec3(borderJson["walls"][i]["translation"][0], borderJson["walls"][i]["translation"][1], borderJson["walls"][i]["translation"][2]);
-            bool r = float(borderJson["walls"][i]["rotation"]);
-            if (r) {
-                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), t) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            } else {
-                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), t);
-            }
-            UBOm_Border.nMat[i] = glm::transpose(glm::inverse(UBOm_Border.mMat[i]));
-        }
-
         // Wall
         DSL_Wall.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
@@ -305,20 +275,6 @@ protected:
         P_Wall.init(this, &VD_Wall, "shaders/WallVert.spv", "shaders/WallFrag.spv", {&DSL_Wall});
         M_Wall.init(this, &VD_Wall, "models/Wall.obj", OBJ);
         T_Wall.init(this, "textures/Bricks.jpg");
-
-        std::ifstream wallJsonFile("jsons/Wall.json");
-        nlohmann::json wallJson;
-        wallJsonFile >> wallJson;
-        for (int i = 0; i < wallNum; ++i) {
-            glm::vec3 t = glm::vec3(wallJson["walls"][i]["translation"][0], wallJson["walls"][i]["translation"][1], wallJson["walls"][i]["translation"][2]);
-            bool r = float(wallJson["walls"][i]["rotation"]);
-            if (r) {
-                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), t) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            } else {
-                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), t);
-            }
-            UBOm_Wall.nMat[i] = glm::transpose(glm::inverse(UBOm_Wall.mMat[i]));
-        }
 
         // Map
         mapInit();
@@ -475,13 +431,13 @@ protected:
         P_Border.bind(commandBuffer);
         M_Border.bind(commandBuffer);
         DS_Border.bind(commandBuffer, P_Border, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Border.indices.size()), borderNum, 0, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Border.indices.size()), 1, 0, 0, 0);
 
         // Level 0 Wall
         P_Wall.bind(commandBuffer);
         M_Wall.bind(commandBuffer);
         DS_Wall.bind(commandBuffer, P_Wall, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Wall.indices.size()), wallNum, 0, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Wall.indices.size()), 1, 0, 0, 0);
     }
 
     void updateUniformBuffer(uint32_t currentImage) override {
@@ -649,13 +605,13 @@ protected:
         // Sphere
         UBOm_Sphere.mvpMat = projectionViewMatrix * sphereMatrix;
         UBOm_Sphere.mMat = sphereMatrix;
-        UBOm_Sphere.nMat = glm::transpose(glm::inverse(UBOm_Sphere.mMat));
+        UBOm_Sphere.nMat = glm::mat4(1.0f);
         DS_Sphere.map(currentImage, &UBOm_Sphere, 0);
 
         // Plane
         UBOm_Plane.mvpMat = projectionViewMatrix;
         UBOm_Plane.mMat = glm::mat4(1.0f);
-        UBOm_Plane.nMat = glm::transpose(glm::inverse(UBOm_Plane.mMat));
+        UBOm_Plane.nMat = glm::mat4(1.0f);
         DS_Plane.map(currentImage, &UBOm_Plane, 0);
 
         UBOp_Plane.lightColor = glm::vec4(LCol, LInt);
@@ -664,9 +620,9 @@ protected:
         DS_Plane.map(currentImage, &UBOp_Plane, 2);
 
         // Item
-        for (int i = 0; i < itemNum; i++) {
-            UBOm_Item.mvpMat[i] = projectionViewMatrix * UBOm_Item.mMat[i];
-        }
+        UBOm_Item.mMat = glm::mat4(1.0f);
+        UBOm_Item.nMat = glm::mat4(1.0f);
+        UBOm_Item.mvpMat = projectionViewMatrix * UBOm_Item.mMat;
         DS_Item.map(currentImage, &UBOm_Item, 0);
 
         UBOp_Item.lightColor = glm::vec4(LCol, LInt);
@@ -675,15 +631,15 @@ protected:
         DS_Item.map(currentImage, &UBOp_Item, 2);
 
         // Border
-        for (int i = 0; i < borderNum; i++) {
-            UBOm_Border.mvpMat[i] = projectionViewMatrix * UBOm_Border.mMat[i];
-        }
+        UBOm_Border.mMat = glm::mat4(1.0f);
+        UBOm_Border.nMat = glm::mat4(1.0f);
+        UBOm_Border.mvpMat = projectionViewMatrix * UBOm_Border.mMat;
         DS_Border.map(currentImage, &UBOm_Border, 0);
 
         // Wall
-        for (int i = 0; i < wallNum; ++i) {
-            UBOm_Wall.mvpMat[i] = projectionViewMatrix * UBOm_Wall.mMat[i];
-        }
+        UBOm_Wall.mMat = glm::mat4(1.0f);
+        UBOm_Wall.nMat = glm::mat4(1.0f);
+        UBOm_Wall.mvpMat = projectionViewMatrix * UBOm_Wall.mMat;
         DS_Wall.map(currentImage, &UBOm_Wall, 0);
 
         UBOp_Wall.lightColor = glm::vec4(LCol, LInt);

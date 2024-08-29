@@ -195,8 +195,8 @@
     {
       "description": "Wall #12",
       "i": {
-        "start": 190,
-        "end": 550
+        "start": 230,
+        "end": 590
       },
       "j": {
         "start": 300,
@@ -207,8 +207,8 @@
     {
       "description": "Wall #13",
       "i": {
-        "start": 420,
-        "end": 780
+        "start": 439,
+        "end": 790
       },
       "j": {
         "start": 180,
