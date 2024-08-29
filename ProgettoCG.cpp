@@ -29,6 +29,16 @@ struct ItemPUBO {
     alignas(4) glm::vec3 lightPos;
     alignas(4) glm::vec3 lightColor;
 };
+struct StepMUBO {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
+struct StepPUBO {
+    alignas(4) glm::vec3 ambientColor;
+    alignas(4) glm::vec3 lightPos;
+    alignas(4) glm::vec3 lightColor;
+};
 struct BorderMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
@@ -60,6 +70,11 @@ struct ItemVertex {
     glm::vec2 uv;
     glm::vec3 norm;
 };
+struct StepVertex {
+    glm::vec3 pos;
+    glm::vec2 uv;
+    glm::vec3 norm;
+};
 struct BorderVertex {
     glm::vec3 pos;
     glm::vec2 uv;
@@ -87,9 +102,12 @@ protected:
 
     bool sphereJumping = false;
     bool sphereGoingUp = false;
-    float sphereAccel = 500.0f;
-    float sphereAccelSuper = 300.0f;
+    float sphereAccel = 300.0f;
+    float sphereAccelSuper = 400.0f;
+    float sphereAccelUp = 200.0f;
+    float sphereAccelUpSuper = 300.0f;
     float sphereJump = 70.0f;
+    float sphereJumpSuper = 100.0f;
     float sphereFriction = 0.95f;
     const float sphereRadius = 5.0f;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
@@ -126,6 +144,16 @@ protected:
     ItemMUBO UBOm_Item{};
     ItemPUBO UBOp_Item{};
 
+    // Step
+    DescriptorSetLayout DSL_Step;
+    VertexDescriptor VD_Step;
+    Pipeline P_Step;
+    Model M_Step;
+    Texture T_Step{};
+    DescriptorSet DS_Step;
+    StepMUBO UBOm_Step{};
+    StepPUBO UBOp_Step{};
+
     // Border
     DescriptorSetLayout DSL_Border;
     VertexDescriptor VD_Border;
@@ -149,19 +177,19 @@ protected:
     static const int mapSize = 1000;
     float mapHeight[mapSize][mapSize];
     float mapType[mapSize][mapSize];
-    const float mapGravity = -150.0f;
+    const float mapGravity = -200.0f;
     const glm::vec3 mapStartPos = glm::vec3(50.0f, 0.0f, 50.0f);
 
     // View
-    float viewDistance = 15.0f + sphereRadius;
+    float viewDistance = 20.0f + sphereRadius;
     float viewDistanceSuper = 30.0f + sphereRadius;
-    float viewHeight = 10.0f + sphereRadius;
-    float viewHeightSuper = 20.0f + sphereRadius;
+    float viewHeight = 20.0f + sphereRadius;
+    float viewHeightSuper = 30.0f + sphereRadius;
     float viewAzimuth = 0.0f;
     float viewElevation = 0.0f;
     const float viewSpeed = glm::radians(170.0f);
     const float viewElevationMax = glm::radians(20.0f);
-    const float viewElevationMin = -glm::radians(25.0f);
+    const float viewElevationMin = -glm::radians(40.0f);
     float Ar{};
     glm::mat4 viewMatrix{};
     glm::vec3 viewPos{};
@@ -206,6 +234,7 @@ protected:
         spherePosOld = spherePos;
         sphereCheckpoint = spherePos;
 
+
         // Plane
         DSL_Plane.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMUBO), 1},
@@ -224,6 +253,7 @@ protected:
         M_Plane.init(this, &VD_Plane, "models/Plane.obj", OBJ);
         T_Plane.init(this, "textures/Grass.jpg");
 
+
         // Item
         DSL_Item.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
@@ -240,6 +270,25 @@ protected:
         P_Item.init(this, &VD_Item, "shaders/ItemFrag.spv", "shaders/ItemVert.spv", {&DSL_Item});
         M_Item.init(this, &VD_Item, "models/Item.obj", OBJ);
         T_Item.init(this, "textures/Bricks.jpg");
+
+
+        // Step
+        DSL_Step.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(StepMUBO), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(StepPUBO), 1},
+        });
+        VD_Step.init(this, {
+                {0, sizeof(StepVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+        }, {
+                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, pos), sizeof(glm::vec3), POSITION},
+                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(StepVertex, uv), sizeof(glm::vec2), UV},
+                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, norm), sizeof(glm::vec3), NORMAL},
+                     });
+        P_Step.init(this, &VD_Step, "shaders/StepFrag.spv", "shaders/StepVert.spv", {&DSL_Step});
+        M_Step.init(this, &VD_Step, "models/Step.obj", OBJ);
+        T_Step.init(this, "textures/Wood.jpg");
+
 
         // Border
         DSL_Border.init(this, {
@@ -258,6 +307,7 @@ protected:
         M_Border.init(this, &VD_Border, "models/Border.obj", OBJ);
         T_Border.init(this, "textures/Bricks.jpg");
 
+
         // Wall
         DSL_Wall.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
@@ -275,13 +325,15 @@ protected:
         M_Wall.init(this, &VD_Wall, "models/Wall.obj", OBJ);
         T_Wall.init(this, "textures/Bricks.jpg");
 
+
         // Map
         mapInit();
 
+
         // Others
-        DPSZs.uniformBlocksInPool = 9;
-        DPSZs.texturesInPool = 5;
-        DPSZs.setsInPool = 5;
+        DPSZs.uniformBlocksInPool = 11;
+        DPSZs.texturesInPool = 6;
+        DPSZs.setsInPool = 6;
     }
 
     void mapInit() {
@@ -333,6 +385,10 @@ protected:
         P_Item.create();
         DS_Item.init(this, &DSL_Item, {&T_Item});
 
+        // Step
+        P_Step.create();
+        DS_Step.init(this, &DSL_Step, {&T_Step});
+
         // Border Wall
         P_Border.create();
         DS_Border.init(this, &DSL_Border, {&T_Border});
@@ -364,14 +420,21 @@ protected:
         M_Item.cleanup();
         T_Item.cleanup();
 
-        // Border Wall
+        // Step
+        DSL_Step.cleanup();
+        VD_Step.cleanup();
+        P_Step.destroy();
+        M_Step.cleanup();
+        T_Step.cleanup();
+
+        // Border
         DSL_Border.cleanup();
         VD_Border.cleanup();
         P_Border.destroy();
         M_Border.cleanup();
         T_Border.cleanup();
 
-        // Level 0 Wall
+        // Wall
         DSL_Wall.cleanup();
         VD_Wall.cleanup();
         P_Wall.destroy();
@@ -396,12 +459,15 @@ protected:
         P_Item.cleanup();
         DS_Item.cleanup();
 
+        // Step
+        P_Step.cleanup();
+        DS_Step.cleanup();
 
-        // Border Wall
+        // Border
         P_Border.cleanup();
         DS_Border.cleanup();
 
-        // Level 0 Wall
+        // Wall
         P_Wall.cleanup();
         DS_Wall.cleanup();
     }
@@ -425,14 +491,19 @@ protected:
         DS_Item.bind(commandBuffer, P_Item, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Item.indices.size()), 1, 0, 0, 0);
 
+        // Step
+        P_Step.bind(commandBuffer);
+        M_Step.bind(commandBuffer);
+        DS_Step.bind(commandBuffer, P_Step, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Step.indices.size()), 1, 0, 0, 0);
 
-        // Border Wall
+        // Border
         P_Border.bind(commandBuffer);
         M_Border.bind(commandBuffer);
         DS_Border.bind(commandBuffer, P_Border, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Border.indices.size()), 1, 0, 0, 0);
 
-        // Level 0 Wall
+        // Wall
         P_Wall.bind(commandBuffer);
         M_Wall.bind(commandBuffer);
         DS_Wall.bind(commandBuffer, P_Wall, 0, currentImage);
@@ -459,18 +530,26 @@ protected:
                 viewAzimuth -= viewSpeed * deltaTime;
         }
         if (rotationInput.x == -1.0f) { // View up
-            viewElevation -= viewSpeed * deltaTime;
-            if (viewElevation < viewElevationMin)
-                viewElevation = viewElevationMin;
-        } else if (rotationInput.x == 1.0f) { // View down
             viewElevation += viewSpeed * deltaTime;
             if (viewElevation > viewElevationMax)
                 viewElevation = viewElevationMax;
+        } else if (rotationInput.x == 1.0f) { // View down
+            viewElevation -= viewSpeed * deltaTime;
+            if (viewElevation < viewElevationMin)
+                viewElevation = viewElevationMin;
         }
         if (movementInput.z == -1.0f) { // Sphere forward movement
-            spherePosAccel = -viewDir * sphereAccel;
+            if (sphereOnGround()) {
+                spherePosAccel = -viewDir * sphereAccel;
+            } else {
+                spherePosAccel = -viewDir * sphereAccelUp;
+            }
         } else if (movementInput.z == 1.0f) { // Sphere backward movement
-            spherePosAccel = viewDir * sphereAccel;
+            if (sphereOnGround()) {
+                spherePosAccel = viewDir * sphereAccel;
+            } else {
+                spherePosAccel = viewDir * sphereAccelUp;
+            }
         } else {
             spherePosAccel.x = 0.0f;
             spherePosAccel.z = 0.0f;
@@ -487,6 +566,8 @@ protected:
             }
             if (mapType[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
                 sphereAccel = sphereAccelSuper;
+                sphereAccelUp = sphereAccelUpSuper;
+                sphereJump = sphereJumpSuper;
                 std::cout << "Super Speed taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
             if (mapType[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
@@ -636,6 +717,17 @@ protected:
         UBOp_Item.ambientColor = LAmb;
         DS_Item.map(currentImage, &UBOp_Item, 2);
 
+        // Step
+        UBOm_Step.mMat = glm::mat4(1.0f);
+        UBOm_Step.nMat = glm::mat4(1.0f);
+        UBOm_Step.mvpMat = projectionViewMatrix * UBOm_Step.mMat;
+        DS_Step.map(currentImage, &UBOm_Step, 0);
+
+        UBOp_Step.lightColor = glm::vec4(LCol, LInt);
+        UBOp_Step.lightPos = spherePos;
+        UBOp_Step.ambientColor = LAmb;
+        DS_Step.map(currentImage, &UBOp_Step, 2);
+
         // Border
         UBOm_Border.mMat = glm::mat4(1.0f);
         UBOm_Border.nMat = glm::mat4(1.0f);
@@ -670,5 +762,3 @@ int main() {
 
     return EXIT_SUCCESS;
 }
-
-// TODO Muri che lampeggiano (è un problema di shader)
