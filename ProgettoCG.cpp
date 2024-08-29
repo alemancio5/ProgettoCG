@@ -39,6 +39,16 @@ struct StepPUBO {
     alignas(4) glm::vec3 lightPos;
     alignas(4) glm::vec3 lightColor;
 };
+struct IronMUBO {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
+struct IronPUBO {
+    alignas(4) glm::vec3 ambientColor;
+    alignas(4) glm::vec3 lightPos;
+    alignas(4) glm::vec3 lightColor;
+};
 struct BorderMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
@@ -71,6 +81,11 @@ struct ItemVertex {
     glm::vec3 norm;
 };
 struct StepVertex {
+    glm::vec3 pos;
+    glm::vec2 uv;
+    glm::vec3 norm;
+};
+struct IronVertex {
     glm::vec3 pos;
     glm::vec2 uv;
     glm::vec3 norm;
@@ -153,6 +168,16 @@ protected:
     DescriptorSet DS_Step;
     StepMUBO UBOm_Step{};
     StepPUBO UBOp_Step{};
+
+    // Iron
+    DescriptorSetLayout DSL_Iron;
+    VertexDescriptor VD_Iron;
+    Pipeline P_Iron;
+    Model M_Iron;
+    Texture T_Iron{};
+    DescriptorSet DS_Iron;
+    IronMUBO UBOm_Iron{};
+    IronPUBO UBOp_Iron{};
 
     // Border
     DescriptorSetLayout DSL_Border;
@@ -290,6 +315,24 @@ protected:
         T_Step.init(this, "textures/Wood.jpg");
 
 
+        // Iron
+        DSL_Iron.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(IronMUBO), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IronPUBO), 1},
+        });
+        VD_Iron.init(this, {
+                {0, sizeof(IronVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+        }, {
+                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, pos), sizeof(glm::vec3), POSITION},
+                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(IronVertex, uv), sizeof(glm::vec2), UV},
+                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, norm), sizeof(glm::vec3), NORMAL},
+                     });
+        P_Iron.init(this, &VD_Iron, "shaders/IronFrag.spv", "shaders/IronVert.spv", {&DSL_Iron});
+        M_Iron.init(this, &VD_Iron, "models/Iron.obj", OBJ);
+        T_Iron.init(this, "textures/Iron.jpg");
+
+
         // Border
         DSL_Border.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
@@ -331,9 +374,9 @@ protected:
 
 
         // Others
-        DPSZs.uniformBlocksInPool = 11;
-        DPSZs.texturesInPool = 6;
-        DPSZs.setsInPool = 6;
+        DPSZs.uniformBlocksInPool = 13;
+        DPSZs.texturesInPool = 7;
+        DPSZs.setsInPool = 7;
     }
 
     void mapInit() {
@@ -389,6 +432,11 @@ protected:
         P_Step.create();
         DS_Step.init(this, &DSL_Step, {&T_Step});
 
+        // Iron
+        P_Iron.create();
+        DS_Iron.init(this, &DSL_Iron, {&T_Iron});
+
+
         // Border Wall
         P_Border.create();
         DS_Border.init(this, &DSL_Border, {&T_Border});
@@ -427,6 +475,13 @@ protected:
         M_Step.cleanup();
         T_Step.cleanup();
 
+        // Iron
+        DSL_Iron.cleanup();
+        VD_Iron.cleanup();
+        P_Iron.destroy();
+        M_Iron.cleanup();
+        T_Iron.cleanup();
+
         // Border
         DSL_Border.cleanup();
         VD_Border.cleanup();
@@ -463,6 +518,10 @@ protected:
         P_Step.cleanup();
         DS_Step.cleanup();
 
+        // Iron
+        P_Iron.cleanup();
+        DS_Iron.cleanup();
+
         // Border
         P_Border.cleanup();
         DS_Border.cleanup();
@@ -496,6 +555,12 @@ protected:
         M_Step.bind(commandBuffer);
         DS_Step.bind(commandBuffer, P_Step, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Step.indices.size()), 1, 0, 0, 0);
+
+        // Iron
+        P_Iron.bind(commandBuffer);
+        M_Iron.bind(commandBuffer);
+        DS_Iron.bind(commandBuffer, P_Iron, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Iron.indices.size()), 1, 0, 0, 0);
 
         // Border
         P_Border.bind(commandBuffer);
@@ -727,7 +792,18 @@ protected:
         UBOp_Step.lightPos = spherePos;
         UBOp_Step.ambientColor = LAmb;
         DS_Step.map(currentImage, &UBOp_Step, 2);
+        
+        // Step
+        UBOm_Iron.mMat = glm::mat4(1.0f);
+        UBOm_Iron.nMat = glm::mat4(1.0f);
+        UBOm_Iron.mvpMat = projectionViewMatrix * UBOm_Iron.mMat;
+        DS_Iron.map(currentImage, &UBOm_Iron, 0);
 
+        UBOp_Iron.lightColor = glm::vec4(LCol, LInt);
+        UBOp_Iron.lightPos = spherePos;
+        UBOp_Iron.ambientColor = LAmb;
+        DS_Iron.map(currentImage, &UBOp_Iron, 2);
+        
         // Border
         UBOm_Border.mMat = glm::mat4(1.0f);
         UBOm_Border.nMat = glm::mat4(1.0f);
