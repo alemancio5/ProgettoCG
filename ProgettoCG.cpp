@@ -19,6 +19,16 @@ struct PlanePUBO {
     alignas(4) glm::vec3 lightPos;
     alignas(4) glm::vec3 lightColor;
 };
+struct ItemMUBO {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
+struct ItemPUBO {
+    alignas(4) glm::vec3 ambientColor;
+    alignas(4) glm::vec3 lightPos;
+    alignas(4) glm::vec3 lightColor;
+};
 struct BorderMUBO {
     alignas(16) glm::mat4 mvpMat[10];
     alignas(16) glm::mat4 mMat[10];
@@ -41,6 +51,11 @@ struct SphereVertex {
     glm::vec2 uv;
 };
 struct PlaneVertex {
+    glm::vec3 pos;
+    glm::vec2 uv;
+    glm::vec3 norm;
+};
+struct ItemVertex {
     glm::vec3 pos;
     glm::vec2 uv;
     glm::vec3 norm;
@@ -100,6 +115,16 @@ protected:
     float LInt = 50.0f;
     glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
     glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
+
+    // Item
+    DescriptorSetLayout DSL_Item;
+    VertexDescriptor VD_Item;
+    Pipeline P_Item;
+    Model M_Item;
+    Texture T_Item{};
+    DescriptorSet DS_Item;
+    ItemMUBO UBOm_Item{};
+    ItemPUBO UBOp_Item{};
 
     // Border
     DescriptorSetLayout DSL_Border;
@@ -203,6 +228,24 @@ protected:
         M_Plane.init(this, &VD_Plane, "models/Plane.obj", OBJ);
         T_Plane.init(this, "textures/Grass.jpg");
 
+        // Item
+        DSL_Item.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ItemPUBO), 1},
+        });
+        VD_Item.init(this, {
+                {0, sizeof(ItemVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+        }, {
+                              {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, pos), sizeof(glm::vec3), POSITION},
+                              {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
+                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
+
+                      });
+        P_Item.init(this, &VD_Item, "shaders/PlaneVert.spv", "shaders/PlaneFrag.spv", {&DSL_Item});
+        M_Item.init(this, &VD_Item, "models/aaaa.obj", OBJ);
+        T_Item.init(this, "textures/Bricks.jpg");
+
         // Border
         DSL_Border.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
@@ -269,9 +312,9 @@ protected:
         mapInit();
 
         // Others
-        DPSZs.uniformBlocksInPool = 7;
-        DPSZs.texturesInPool = 4;
-        DPSZs.setsInPool = 3 + 1;
+        DPSZs.uniformBlocksInPool = 9;
+        DPSZs.texturesInPool = 5;
+        DPSZs.setsInPool = 5;
     }
 
     void mapInit() {
@@ -319,6 +362,10 @@ protected:
         P_Plane.create();
         DS_Plane.init(this, &DSL_Plane, {&T_Plane});
 
+        // Item
+        P_Item.create();
+        DS_Item.init(this, &DSL_Item, {&T_Item});
+
         // Border Wall
         P_Border.create();
         DS_Border.init(this, &DSL_Border, {&T_Border});
@@ -342,6 +389,13 @@ protected:
         P_Plane.destroy();
         M_Plane.cleanup();
         T_Plane.cleanup();
+
+        // Item
+        DSL_Item.cleanup();
+        VD_Item.cleanup();
+        P_Item.destroy();
+        M_Item.cleanup();
+        T_Item.cleanup();
 
         // Border Wall
         DSL_Border.cleanup();
@@ -371,6 +425,11 @@ protected:
         P_Plane.cleanup();
         DS_Plane.cleanup();
 
+        // Item
+        P_Item.cleanup();
+        DS_Item.cleanup();
+
+
         // Border Wall
         P_Border.cleanup();
         DS_Border.cleanup();
@@ -392,6 +451,13 @@ protected:
         M_Plane.bind(commandBuffer);
         DS_Plane.bind(commandBuffer, P_Plane, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Plane.indices.size()), 1, 0, 0, 0);
+
+        // Item
+        P_Item.bind(commandBuffer);
+        M_Item.bind(commandBuffer);
+        DS_Item.bind(commandBuffer, P_Item, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Item.indices.size()), 1, 0, 0, 0);
+
 
         // Border Wall
         P_Border.bind(commandBuffer);
@@ -584,6 +650,17 @@ protected:
         UBOp_Plane.lightPos = spherePos;
         UBOp_Plane.ambientColor = LAmb;
         DS_Plane.map(currentImage, &UBOp_Plane, 2);
+
+        // Item
+        UBOm_Item.mvpMat = projectionViewMatrix;
+        UBOm_Item.mMat = glm::mat4(1.0f);
+        UBOm_Item.nMat = glm::transpose(glm::inverse(UBOm_Item.mMat));
+        DS_Item.map(currentImage, &UBOm_Item, 0);
+
+        UBOp_Item.lightColor = glm::vec4(LCol, LInt);
+        UBOp_Item.lightPos = spherePos;
+        UBOp_Item.ambientColor = LAmb;
+        DS_Item.map(currentImage, &UBOp_Item, 2);
 
         // Border
         std::ifstream borderJsonFile("jsons/Border.json");
