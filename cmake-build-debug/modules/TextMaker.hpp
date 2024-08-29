@@ -1,3 +1,4 @@
+#include "Starter.hpp"
 
 struct SingleText {
 	int usedLines;

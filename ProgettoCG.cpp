@@ -1,7 +1,26 @@
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
 
-
+// Texts of the game
+std::vector<SingleText> textLives = {
+    {1, {"LIVES: 0", "", "",""}, 0, 0},
+    {1, {"LIVES: 1", "", "",""}, 0, 0},
+    {1, {"LIVES: 2", "", "",""}, 0, 0},
+    {1, {"LIVES: 3", "","",""}, 0, 0}
+};
+std::vector<SingleText> textMessage = {
+    {2, {"", "E:", "",""}, 0, 0},
+    {2, {"", "E: CHECKPOINT", "",""}, 0, 0},
+    {2, {"", "E: SUPER SPEED", "",""}, 0, 0},
+    {2, {"", "E: SUPER VIEW", "",""}, 0, 0},
+    {2, {"", "E: WIN", "",""}, 0, 0},
+    {2, {"", "YOU WIN", "",""}, 0, 0}
+};
+std::vector<SingleText> textFinish = {
+    {3, {"", "", "",""}, 0, 0},
+    {3, {"", "", "YOU WIN",""}, 0, 0},
+    {3, {"", "", "GAME OVER",""}, 0, 0}
+};
 
 // UBO structs
 struct SphereMUBO {
@@ -132,6 +151,7 @@ protected:
 
     bool sphereJumping = false;
     bool sphereGoingUp = false;
+    int sphereLives = 3;
     float sphereAccel = 300.0f;
     float sphereAccelSuper = 400.0f;
     float sphereAccelUp = 200.0f;
@@ -237,7 +257,7 @@ protected:
     float viewHeightSuper = 30.0f + sphereRadius;
     float viewAzimuth = 0.0f;
     float viewElevation = 0.0f;
-    const float viewSpeed = glm::radians(170.0f);
+    float viewSpeed = glm::radians(170.0f);
     const float viewElevationMax = glm::radians(90.0f);
     const float viewElevationMin = -glm::radians(90.0f);
     float Ar{};
@@ -246,6 +266,13 @@ protected:
     glm::vec3 viewPosOld{};
     glm::vec3 viewPosLock = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 viewDir{};
+
+    // Text
+    TextMaker textLivesBanner;
+    TextMaker textMessageBanner;
+    int textMessageIndex = 0;
+    TextMaker textFinishBanner;
+    int textFinishIndex = 0;
 
     // Projection
     glm::mat4 projectionMatrix{};
@@ -416,10 +443,16 @@ protected:
         mapInit();
 
 
+        // Text
+        textLivesBanner.init(this, &textLives);
+        textMessageBanner.init(this, &textMessage);
+        textFinishBanner.init(this, &textFinish);
+
+
         // Others
         DPSZs.uniformBlocksInPool = 15;
-        DPSZs.texturesInPool = 8;
-        DPSZs.setsInPool = 8;
+        DPSZs.texturesInPool = 11;
+        DPSZs.setsInPool = 11;
     }
 
     void mapInit() {
@@ -490,6 +523,11 @@ protected:
         // Border Wall
         P_Wall.create();
         DS_Wall.init(this, &DSL_Border, {&T_Border});
+
+        // Text
+        textLivesBanner.pipelinesAndDescriptorSetsInit();
+        textMessageBanner.pipelinesAndDescriptorSetsInit();
+        textFinishBanner.pipelinesAndDescriptorSetsInit();
     }
 
     void localCleanup() override {
@@ -549,6 +587,11 @@ protected:
         M_Wall.cleanup();
         T_Wall.cleanup();
 
+        // Text
+        textLivesBanner.localCleanup();
+        textMessageBanner.localCleanup();
+        textFinishBanner.localCleanup();
+
         // Others
         glfwDestroyWindow(window);
         glfwTerminate();
@@ -586,6 +629,11 @@ protected:
         // Wall
         P_Wall.cleanup();
         DS_Wall.cleanup();
+
+        // Text
+        textLivesBanner.pipelinesAndDescriptorSetsCleanup();
+        textMessageBanner.pipelinesAndDescriptorSetsCleanup();
+        textFinishBanner.pipelinesAndDescriptorSetsCleanup();
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
@@ -636,6 +684,11 @@ protected:
         M_Wall.bind(commandBuffer);
         DS_Wall.bind(commandBuffer, P_Wall, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Wall.indices.size()), 1, 0, 0, 0);
+
+        // Text
+        textLivesBanner.populateCommandBuffer(commandBuffer, currentImage, sphereLives);
+        textMessageBanner.populateCommandBuffer(commandBuffer, currentImage, textMessageIndex);
+        textFinishBanner.populateCommandBuffer(commandBuffer, currentImage, textFinishIndex);
     }
 
     void updateUniformBuffer(uint32_t currentImage) override {
@@ -645,6 +698,10 @@ protected:
         auto rotationInput = glm::vec3(0.0f);
         bool fireInput = false;
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
+
+        // Text
+        textMessageIndex = 0;
+        RebuildPipeline();
 
         // Use inputs
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) { // Game exit
@@ -690,21 +747,21 @@ protected:
         if (rotationInput.z == -1.0f  && sphereOnGround()) {
             if (mapType[(int)spherePos.x][(int)spherePos.z] == 1.0f) {
                 sphereCheckpoint = spherePos;
-                std::cout << "Checkpoint saved: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
             if (mapType[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
                 sphereAccel = sphereAccelSuper;
                 sphereAccelUp = sphereAccelUpSuper;
                 sphereJump = sphereJumpSuper;
-                std::cout << "Super Speed taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
             if (mapType[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
                 viewDistance = viewDistanceSuper;
                 viewHeight = viewHeightSuper;
-                std::cout << "Super View taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
             if (mapType[(int)spherePos.x][(int)spherePos.z] == 4.0f) {
-                std::cout << "Win taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
+                textFinishIndex = 1;
+                sphereAccel = 0.0f;
+                sphereJump = 0.0f;
+                viewSpeed = 0.0f;
             }
         }
 
@@ -748,8 +805,28 @@ protected:
 
     void updateSphereVariables(float deltaTime) {
         // Type check
-        if (mapType[(int)spherePos.x][(int)spherePos.z] == 5.0 && sphereOnGround()) {
+        if (mapType[(int)spherePos.x][(int)spherePos.z] == 1.0 && sphereOnGround()) {
+            textMessageIndex = 1;
+            RebuildPipeline();
+        } else if (mapType[(int)spherePos.x][(int)spherePos.z] == 2.0 && sphereOnGround()) {
+            textMessageIndex = 2;
+            RebuildPipeline();
+        } else if (mapType[(int)spherePos.x][(int)spherePos.z] == 3.0 && sphereOnGround()) {
+            textMessageIndex = 3;
+            RebuildPipeline();
+        } else if (mapType[(int)spherePos.x][(int)spherePos.z] == 4.0 && sphereOnGround()) {
+            textMessageIndex = 4;
+            RebuildPipeline();
+        } else if (mapType[(int)spherePos.x][(int)spherePos.z] == 5.0 && sphereOnGround()) {
             spherePos = sphereCheckpoint;
+            sphereLives--;
+            if (sphereLives == 0) {
+                textFinishIndex = 2;
+                sphereAccel = 0.0f;
+                sphereJump = 0.0f;
+                viewSpeed = 0.0f;
+            }
+            RebuildPipeline();
         }
 
         // Update position in y
