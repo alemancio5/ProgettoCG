@@ -220,25 +220,24 @@ protected:
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, norm), sizeof(glm::vec3), NORMAL},
 
         });
-        P_Plane.init(this, &VD_Plane, "shaders/PlaneVert.spv", "shaders/PlaneFrag.spv", {&DSL_Plane});
+        P_Plane.init(this, &VD_Plane, "shaders/NormalVert.spv", "shaders/NormalFrag.spv", {&DSL_Plane});
         M_Plane.init(this, &VD_Plane, "models/Plane.obj", OBJ);
         T_Plane.init(this, "textures/Grass.jpg");
 
         // Item
         DSL_Item.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ItemPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ItemPUBO), 1},
         });
         VD_Item.init(this, {
-                {0, sizeof(ItemVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+            {0, sizeof(ItemVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                              {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, pos), sizeof(glm::vec3), POSITION},
-                              {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
-                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
-
-                      });
-        P_Item.init(this, &VD_Item, "shaders/PlaneVert.spv", "shaders/PlaneFrag.spv", {&DSL_Item});
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, pos), sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
+        });
+        P_Item.init(this, &VD_Item, "shaders/NormalVert.spv", "shaders/NormalFrag.spv", {&DSL_Item});
         M_Item.init(this, &VD_Item, "models/Item.obj", OBJ);
         T_Item.init(this, "textures/Bricks.jpg");
 
@@ -255,7 +254,7 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderVertex, uv),      sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Border.init(this, &VD_Border, "shaders/BorderVert.spv", "shaders/BorderFrag.spv", {&DSL_Border});
+        P_Border.init(this, &VD_Border, "shaders/NormalVert.spv", "shaders/NormalFrag.spv", {&DSL_Border});
         M_Border.init(this, &VD_Border, "models/Border.obj", OBJ);
         T_Border.init(this, "textures/Bricks.jpg");
 
@@ -272,7 +271,7 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Wall.init(this, &VD_Wall, "shaders/WallVert.spv", "shaders/WallFrag.spv", {&DSL_Wall});
+        P_Wall.init(this, &VD_Wall, "shaders/NormalVert.spv", "shaders/NormalFrag.spv", {&DSL_Wall});
         M_Wall.init(this, &VD_Wall, "models/Wall.obj", OBJ);
         T_Wall.init(this, "textures/Bricks.jpg");
 
@@ -303,19 +302,19 @@ protected:
             }
         }
 
-        // Items initialization
+        // Type initialization
         std::ifstream itemsJsonFile("jsons/Type.json");
         nlohmann::json itemsJson;
         itemsJsonFile >> itemsJson;
         for (const auto& loop : itemsJson["loops"]) {
-            int iStart = loop["i"]["start"].is_string() ? mapSize : loop["i"]["start"].get<int>();
-            int iEnd = loop["i"]["end"].is_string() ? mapSize : loop["i"]["end"].get<int>();
-            int jStart = loop["j"]["start"].is_string() ? mapSize : loop["j"]["start"].get<int>();
-            int jEnd = loop["j"]["end"].is_string() ? mapSize : loop["j"]["end"].get<int>();
-            float items = loop["items"];
+            int iStart = loop["i"]["start"];
+            int iEnd = loop["i"]["end"];
+            int jStart = loop["j"]["start"];
+            int jEnd = loop["j"]["end"];
+            float type = loop["type"];
             for (int i = iStart; i < iEnd; i++) {
                 for (int j = jStart; j < jEnd; j++) {
-                    mapType[i][j] = items;
+                    mapType[i][j] = type;
                 }
             }
         }
@@ -481,7 +480,7 @@ protected:
             sphereGoingUp = true;
             sphereJumping = true;
         }
-        if (rotationInput.z == -1.0f) {
+        if (rotationInput.z == -1.0f  && sphereOnGround()) {
             if (mapType[(int)spherePos.x][(int)spherePos.z] == 1.0f) {
                 sphereCheckpoint = spherePos;
                 std::cout << "Checkpoint saved: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
@@ -599,6 +598,13 @@ protected:
 
         // Update matrix
         sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::mat4_cast(sphereRot);
+    }
+
+    bool sphereOnGround() {
+        if (mapHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius == spherePos.y)
+            return true;
+        else
+            return false;
     }
 
     void updateUBO(uint32_t currentImage) {
