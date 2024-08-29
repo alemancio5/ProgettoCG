@@ -489,10 +489,10 @@ protected:
         float y = spherePos.y + viewHeight + viewDistance * glm::sin(viewElevation);
 
         // Collision detection
-        if (mapHeight[(int)x][(int)viewPosOld.z] > mapHeight[(int)spherePos.x][(int)spherePos.z]) {
+        if (mapHeight[(int)x][(int)viewPosOld.z] > spherePos.y) {
             x = viewPosOld.x;
             viewPosLock.x = 1.0f;
-        } else if (mapHeight[(int)viewPosOld.x][(int)z] > mapHeight[(int)spherePos.x][(int)spherePos.z]) {
+        } else if (mapHeight[(int)viewPosOld.x][(int)z] > spherePos.y) {
             z = viewPosOld.z;
             viewPosLock.z = 1.0f;
         }
@@ -536,19 +536,19 @@ protected:
         spherePosSpeed.z *= sphereFriction;
 
         // Collision detection
-        if (mapHeight[(int)(spherePos.x + sphereRadius)][(int)(spherePosOld.z)] > mapHeight[(int)(spherePos.x)][(int)(spherePos.z)]) {
+        if (mapHeight[(int)(spherePos.x + sphereRadius)][(int)(spherePosOld.z)] > spherePos.y) {
             if (spherePosSpeed.x >= 0.0f)
                 spherePos.x = spherePosOld.x;
         }
-        else if (mapHeight[(int)(spherePos.x - sphereRadius)][(int)(spherePosOld.z)] > mapHeight[(int)(spherePos.x)][(int)(spherePos.z)]) {
+        else if (mapHeight[(int)(spherePos.x - sphereRadius)][(int)(spherePosOld.z)] > spherePos.y) {
             if (spherePosSpeed.x <= 0.0f)
                 spherePos.x = spherePosOld.x;
         }
-        if (mapHeight[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > mapHeight[(int)(spherePos.x)][(int)(spherePos.z)]) {
+        if (mapHeight[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > spherePos.y) {
             if (spherePosSpeed.z >= 0.0f)
                 spherePos.z = spherePosOld.z;
         }
-        else if (mapHeight[(int)(spherePos.x)][(int)(spherePosOld.z - sphereRadius)] > mapHeight[(int)(spherePos.x)][(int)(spherePos.z)]) {
+        else if (mapHeight[(int)(spherePos.x)][(int)(spherePosOld.z - sphereRadius)] > spherePos.y) {
             if (spherePosSpeed.z <= 0.0f)
                 spherePos.z = spherePosOld.z;
         }
