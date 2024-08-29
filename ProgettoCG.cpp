@@ -20,9 +20,9 @@ struct PlanePUBO {
     alignas(4) glm::vec3 lightColor;
 };
 struct ItemMUBO {
-    alignas(16) glm::mat4 mvpMat;
-    alignas(16) glm::mat4 mMat;
-    alignas(16) glm::mat4 nMat;
+    alignas(16) glm::mat4 mvpMat[10];
+    alignas(16) glm::mat4 mMat[10];
+    alignas(16) glm::mat4 nMat[10];
 };
 struct ItemPUBO {
     alignas(4) glm::vec3 ambientColor;
@@ -87,8 +87,8 @@ protected:
 
     bool sphereJumping = false;
     bool sphereGoingUp = false;
-    float sphereAccel = 200.0f;
-    float sphereAccelSuper = 250.0f;
+    float sphereAccel = 500.0f;
+    float sphereAccelSuper = 300.0f;
     float sphereJump = 70.0f;
     float sphereFriction = 0.95f;
     const float sphereRadius = 5.0f;
@@ -126,6 +126,8 @@ protected:
     ItemMUBO UBOm_Item{};
     ItemPUBO UBOp_Item{};
 
+    const int itemNum = 6;
+
     // Border
     DescriptorSetLayout DSL_Border;
     VertexDescriptor VD_Border;
@@ -152,7 +154,7 @@ protected:
     // Map
     static const int mapSize = 1000;
     float mapHeight[mapSize][mapSize];
-    float mapItems[mapSize][mapSize];
+    float mapType[mapSize][mapSize];
     const float mapGravity = -150.0f;
     const glm::vec3 mapStartPos = glm::vec3(50.0f, 0.0f, 50.0f);
 
@@ -243,8 +245,17 @@ protected:
 
                       });
         P_Item.init(this, &VD_Item, "shaders/PlaneVert.spv", "shaders/PlaneFrag.spv", {&DSL_Item});
-        M_Item.init(this, &VD_Item, "models/aaaa.obj", OBJ);
+        M_Item.init(this, &VD_Item, "models/Item.obj", OBJ);
         T_Item.init(this, "textures/Bricks.jpg");
+
+        std::ifstream itemJsonFile("jsons/Item.json");
+        nlohmann::json itemJson;
+        itemJsonFile >> itemJson;
+        for (int i = 0; i < itemNum; i++) {
+            glm::vec3 t = glm::vec3(itemJson["items"][i]["translation"][0], itemJson["items"][i]["translation"][1], itemJson["items"][i]["translation"][2]);
+            UBOm_Item.mMat[i] = glm::translate(glm::mat4(1.0f), t);
+            UBOm_Item.nMat[i] = glm::transpose(glm::inverse(UBOm_Item.mMat[i]));
+        }
 
         // Border
         DSL_Border.init(this, {
@@ -263,16 +274,17 @@ protected:
         M_Border.init(this, &VD_Border, "models/Border.obj", OBJ);
         T_Border.init(this, "textures/Bricks.jpg");
 
+
         std::ifstream borderJsonFile("jsons/Border.json");
         nlohmann::json borderJson;
         borderJsonFile >> borderJson;
         for (int i = 0; i < borderNum; i++) {
-            glm::vec3 translation = glm::vec3(borderJson["walls"][i]["translation"][0], borderJson["walls"][i]["translation"][1], borderJson["walls"][i]["translation"][2]);
-            bool rotation = float(borderJson["walls"][i]["rotation"]);
-            if (rotation) {
-                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), translation) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            glm::vec3 t = glm::vec3(borderJson["walls"][i]["translation"][0], borderJson["walls"][i]["translation"][1], borderJson["walls"][i]["translation"][2]);
+            bool r = float(borderJson["walls"][i]["rotation"]);
+            if (r) {
+                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), t) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             } else {
-                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), translation);
+                UBOm_Border.mMat[i] = glm::translate(glm::mat4(1.0f), t);
             }
             UBOm_Border.nMat[i] = glm::transpose(glm::inverse(UBOm_Border.mMat[i]));
         }
@@ -298,12 +310,12 @@ protected:
         nlohmann::json wallJson;
         wallJsonFile >> wallJson;
         for (int i = 0; i < wallNum; ++i) {
-            glm::vec3 translation = glm::vec3(wallJson["walls"][i]["translation"][0], wallJson["walls"][i]["translation"][1], wallJson["walls"][i]["translation"][2]);
-            bool rotation = float(wallJson["walls"][i]["rotation"]);
-            if (rotation) {
-                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), translation) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            glm::vec3 t = glm::vec3(wallJson["walls"][i]["translation"][0], wallJson["walls"][i]["translation"][1], wallJson["walls"][i]["translation"][2]);
+            bool r = float(wallJson["walls"][i]["rotation"]);
+            if (r) {
+                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), t) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             } else {
-                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), translation);
+                UBOm_Wall.mMat[i] = glm::translate(glm::mat4(1.0f), t);
             }
             UBOm_Wall.nMat[i] = glm::transpose(glm::inverse(UBOm_Wall.mMat[i]));
         }
@@ -336,7 +348,7 @@ protected:
         }
 
         // Items initialization
-        std::ifstream itemsJsonFile("jsons/Items.json");
+        std::ifstream itemsJsonFile("jsons/Type.json");
         nlohmann::json itemsJson;
         itemsJsonFile >> itemsJson;
         for (const auto& loop : itemsJson["loops"]) {
@@ -347,7 +359,7 @@ protected:
             float items = loop["items"];
             for (int i = iStart; i < iEnd; i++) {
                 for (int j = jStart; j < jEnd; j++) {
-                    mapItems[i][j] = items;
+                    mapType[i][j] = items;
                 }
             }
         }
@@ -514,20 +526,20 @@ protected:
             sphereJumping = true;
         }
         if (rotationInput.z == -1.0f) {
-            if (mapItems[(int)spherePos.x][(int)spherePos.z] == 1.0f) {
+            if (mapType[(int)spherePos.x][(int)spherePos.z] == 1.0f) {
                 sphereCheckpoint = spherePos;
                 std::cout << "Checkpoint saved: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
-            if (mapItems[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
+            if (mapType[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
                 sphereAccel = sphereAccelSuper;
                 std::cout << "Super Speed taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
-            if (mapItems[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
+            if (mapType[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
                 viewDistance = viewDistanceSuper;
                 viewHeight = viewHeightSuper;
                 std::cout << "Super View taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
-            if (mapItems[(int)spherePos.x][(int)spherePos.z] == 4.0f) {
+            if (mapType[(int)spherePos.x][(int)spherePos.z] == 4.0f) {
                 std::cout << "Win taken: " << spherePos.x << ", " << spherePos.y << ", " << spherePos.z << std::endl;
             }
         }
@@ -652,9 +664,9 @@ protected:
         DS_Plane.map(currentImage, &UBOp_Plane, 2);
 
         // Item
-        UBOm_Item.mvpMat = projectionViewMatrix;
-        UBOm_Item.mMat = glm::mat4(1.0f);
-        UBOm_Item.nMat = glm::transpose(glm::inverse(UBOm_Item.mMat));
+        for (int i = 0; i < itemNum; i++) {
+            UBOm_Item.mvpMat[i] = projectionViewMatrix * UBOm_Item.mMat[i];
+        }
         DS_Item.map(currentImage, &UBOm_Item, 0);
 
         UBOp_Item.lightColor = glm::vec4(LCol, LInt);
@@ -663,18 +675,12 @@ protected:
         DS_Item.map(currentImage, &UBOp_Item, 2);
 
         // Border
-        std::ifstream borderJsonFile("jsons/Border.json");
-        nlohmann::json borderJson;
-        borderJsonFile >> borderJson;
         for (int i = 0; i < borderNum; i++) {
             UBOm_Border.mvpMat[i] = projectionViewMatrix * UBOm_Border.mMat[i];
         }
         DS_Border.map(currentImage, &UBOm_Border, 0);
 
         // Wall
-        std::ifstream wallJsonFile("jsons/Wall.json");
-        nlohmann::json wallJson;
-        wallJsonFile >> wallJson;
         for (int i = 0; i < wallNum; ++i) {
             UBOm_Wall.mvpMat[i] = projectionViewMatrix * UBOm_Wall.mMat[i];
         }
@@ -703,6 +709,4 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-
-// TODO Aggiustare che veloce sale sui muri
 // TODO Muri che lampeggiano (è un problema di shader)
