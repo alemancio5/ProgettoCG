@@ -747,6 +747,11 @@ protected:
     }
 
     void updateSphereVariables(float deltaTime) {
+        // Type check
+        if (mapType[(int)spherePos.x][(int)spherePos.z] == 5.0 && sphereOnGround()) {
+            spherePos = sphereCheckpoint;
+        }
+
         // Update position in y
         if (sphereGoingUp) {
             spherePosSpeed.y = sphereJump;
