@@ -49,6 +49,16 @@ struct IronPUBO {
     alignas(4) glm::vec3 lightPos;
     alignas(4) glm::vec3 lightColor;
 };
+struct DecorationMUBO {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
+struct DecorationPUBO {
+    alignas(4) glm::vec3 ambientColor;
+    alignas(4) glm::vec3 lightPos;
+    alignas(4) glm::vec3 lightColor;
+};
 struct BorderMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
@@ -86,6 +96,11 @@ struct StepVertex {
     glm::vec3 norm;
 };
 struct IronVertex {
+    glm::vec3 pos;
+    glm::vec2 uv;
+    glm::vec3 norm;
+};
+struct DecorationVertex {
     glm::vec3 pos;
     glm::vec2 uv;
     glm::vec3 norm;
@@ -179,6 +194,16 @@ protected:
     IronMUBO UBOm_Iron{};
     IronPUBO UBOp_Iron{};
 
+    // Decoration
+    DescriptorSetLayout DSL_Decoration;
+    VertexDescriptor VD_Decoration;
+    Pipeline P_Decoration;
+    Model M_Decoration;
+    Texture T_Decoration{};
+    DescriptorSet DS_Decoration;
+    DecorationMUBO UBOm_Decoration{};
+    DecorationPUBO UBOp_Decoration{};
+    
     // Border
     DescriptorSetLayout DSL_Border;
     VertexDescriptor VD_Border;
@@ -213,8 +238,8 @@ protected:
     float viewAzimuth = 0.0f;
     float viewElevation = 0.0f;
     const float viewSpeed = glm::radians(170.0f);
-    const float viewElevationMax = glm::radians(20.0f);
-    const float viewElevationMin = -glm::radians(40.0f);
+    const float viewElevationMax = glm::radians(90.0f);
+    const float viewElevationMin = -glm::radians(90.0f);
     float Ar{};
     glm::mat4 viewMatrix{};
     glm::vec3 viewPos{};
@@ -333,6 +358,24 @@ protected:
         T_Iron.init(this, "textures/Iron.jpg");
 
 
+        // Decoration
+        DSL_Decoration.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(DecorationMUBO), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DecorationPUBO), 1},
+        });
+        VD_Decoration.init(this, {
+                {0, sizeof(DecorationVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+        }, {
+                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, pos), sizeof(glm::vec3), POSITION},
+                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(DecorationVertex, uv), sizeof(glm::vec2), UV},
+                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, norm), sizeof(glm::vec3), NORMAL},
+                     });
+        P_Decoration.init(this, &VD_Decoration, "shaders/DecorationFrag.spv", "shaders/DecorationVert.spv", {&DSL_Decoration});
+        M_Decoration.init(this, &VD_Decoration, "models/Decoration.obj", OBJ);
+        T_Decoration.init(this, "textures/Marble.jpg");
+
+
         // Border
         DSL_Border.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
@@ -374,9 +417,9 @@ protected:
 
 
         // Others
-        DPSZs.uniformBlocksInPool = 13;
-        DPSZs.texturesInPool = 7;
-        DPSZs.setsInPool = 7;
+        DPSZs.uniformBlocksInPool = 15;
+        DPSZs.texturesInPool = 8;
+        DPSZs.setsInPool = 8;
     }
 
     void mapInit() {
@@ -436,7 +479,10 @@ protected:
         P_Iron.create();
         DS_Iron.init(this, &DSL_Iron, {&T_Iron});
 
-
+        // Decoration
+        P_Decoration.create();
+        DS_Decoration.init(this, &DSL_Decoration, {&T_Decoration});
+        
         // Border Wall
         P_Border.create();
         DS_Border.init(this, &DSL_Border, {&T_Border});
@@ -482,6 +528,13 @@ protected:
         M_Iron.cleanup();
         T_Iron.cleanup();
 
+        // Decoration
+        DSL_Decoration.cleanup();
+        VD_Decoration.cleanup();
+        P_Decoration.destroy();
+        M_Decoration.cleanup();
+        T_Decoration.cleanup();
+
         // Border
         DSL_Border.cleanup();
         VD_Border.cleanup();
@@ -522,6 +575,10 @@ protected:
         P_Iron.cleanup();
         DS_Iron.cleanup();
 
+        // Decoration
+        P_Decoration.cleanup();
+        DS_Decoration.cleanup();
+
         // Border
         P_Border.cleanup();
         DS_Border.cleanup();
@@ -561,6 +618,12 @@ protected:
         M_Iron.bind(commandBuffer);
         DS_Iron.bind(commandBuffer, P_Iron, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Iron.indices.size()), 1, 0, 0, 0);
+
+        // Decoration
+        P_Decoration.bind(commandBuffer);
+        M_Decoration.bind(commandBuffer);
+        DS_Decoration.bind(commandBuffer, P_Decoration, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Decoration.indices.size()), 1, 0, 0, 0);
 
         // Border
         P_Border.bind(commandBuffer);
@@ -793,7 +856,7 @@ protected:
         UBOp_Step.ambientColor = LAmb;
         DS_Step.map(currentImage, &UBOp_Step, 2);
         
-        // Step
+        // Iron
         UBOm_Iron.mMat = glm::mat4(1.0f);
         UBOm_Iron.nMat = glm::mat4(1.0f);
         UBOm_Iron.mvpMat = projectionViewMatrix * UBOm_Iron.mMat;
@@ -803,6 +866,17 @@ protected:
         UBOp_Iron.lightPos = spherePos;
         UBOp_Iron.ambientColor = LAmb;
         DS_Iron.map(currentImage, &UBOp_Iron, 2);
+
+        // Decoration
+        UBOm_Decoration.mMat = glm::mat4(1.0f);
+        UBOm_Decoration.nMat = glm::mat4(1.0f);
+        UBOm_Decoration.mvpMat = projectionViewMatrix * UBOm_Decoration.mMat;
+        DS_Decoration.map(currentImage, &UBOm_Decoration, 0);
+
+        UBOp_Decoration.lightColor = glm::vec4(LCol, LInt);
+        UBOp_Decoration.lightPos = spherePos;
+        UBOp_Decoration.ambientColor = LAmb;
+        DS_Decoration.map(currentImage, &UBOp_Decoration, 2);
         
         // Border
         UBOm_Border.mMat = glm::mat4(1.0f);
