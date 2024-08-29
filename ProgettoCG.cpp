@@ -220,7 +220,7 @@ protected:
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, norm), sizeof(glm::vec3), NORMAL},
 
         });
-        P_Plane.init(this, &VD_Plane, "shaders/NormalVert.spv", "shaders/NormalFrag.spv", {&DSL_Plane});
+        P_Plane.init(this, &VD_Plane, "shaders/PlaneFrag.spv", "shaders/PlaneVert.spv", {&DSL_Plane});
         M_Plane.init(this, &VD_Plane, "models/Plane.obj", OBJ);
         T_Plane.init(this, "textures/Grass.jpg");
 
@@ -237,7 +237,7 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
         });
-        P_Item.init(this, &VD_Item, "shaders/NormalVert.spv", "shaders/NormalFrag.spv", {&DSL_Item});
+        P_Item.init(this, &VD_Item, "shaders/ItemFrag.spv", "shaders/ItemVert.spv", {&DSL_Item});
         M_Item.init(this, &VD_Item, "models/Item.obj", OBJ);
         T_Item.init(this, "textures/Bricks.jpg");
 
@@ -254,7 +254,7 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderVertex, uv),      sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Border.init(this, &VD_Border, "shaders/NormalVert.spv", "shaders/NormalFrag.spv", {&DSL_Border});
+        P_Border.init(this, &VD_Border, "shaders/BorderFrag.spv", "shaders/BorderVert.spv", {&DSL_Border});
         M_Border.init(this, &VD_Border, "models/Border.obj", OBJ);
         T_Border.init(this, "textures/Bricks.jpg");
 
@@ -271,7 +271,7 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Wall.init(this, &VD_Wall, "shaders/NormalVert.spv", "shaders/NormalFrag.spv", {&DSL_Wall});
+        P_Wall.init(this, &VD_Wall, "shaders/WallFrag.spv", "shaders/WallVert.spv", {&DSL_Wall});
         M_Wall.init(this, &VD_Wall, "models/Wall.obj", OBJ);
         T_Wall.init(this, "textures/Bricks.jpg");
 
