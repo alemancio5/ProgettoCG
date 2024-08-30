@@ -137,8 +137,17 @@ struct WallVertex {
 
 
 
-class Level1 : public BaseProject {
+class Level : public BaseProject {
 protected:
+
+    // Level
+    static const int levelSize = 1000;
+    float levelHeight[levelSize][levelSize];
+    float levelType[levelSize][levelSize];
+    const glm::vec3 levelStart = glm::vec3(50.0f, 0.0f, 50.0f);
+    std::string levelPathPrefix = "";
+    std::string levelPathHeight = "jsons/Height.json";
+    std::string levelPathType = "jsons/Type.json";
 
     // Sphere
     DescriptorSetLayout DSL_Sphere;
@@ -148,7 +157,6 @@ protected:
     Texture T_Sphere{};
     DescriptorSet DS_Sphere;
     SphereMUBO UBOm_Sphere{};
-
     bool sphereJumping = false;
     bool sphereGoingUp = false;
     int sphereLives = 3;
@@ -159,6 +167,7 @@ protected:
     float sphereJump = 60.0f;
     float sphereJumpSuper = 90.0f;
     float sphereFriction = 0.95f;
+    const float sphereGravity = -200.0f;
     const float sphereRadius = 5.0f;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
     glm::vec3 spherePos{};
@@ -169,6 +178,10 @@ protected:
     glm::quat sphereRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotAccel = glm::vec3(0.0f, 0.0f, 0.0f);
+    std::string spherePathVert = levelPathPrefix + "shaders/SphereVert.spv";
+    std::string spherePathFrag = levelPathPrefix + "shaders/SphereFrag.spv";
+    std::string spherePathModel = levelPathPrefix + "models/Sphere.obj";
+    std::string spherePathTexture = levelPathPrefix + "textures/Sun.jpg";
 
     // Plane
     DescriptorSetLayout DSL_Plane;
@@ -179,6 +192,11 @@ protected:
     DescriptorSet DS_Plane;
     PlaneMUBO UBOm_Plane{};
     PlanePUBO UBOp_Plane{};
+    std::string planePathVert = levelPathPrefix + "shaders/PlaneVert.spv";
+    std::string planePathFrag = levelPathPrefix + "shaders/PlaneFrag.spv";
+    std::string planePathModel = levelPathPrefix + "models/Plane.obj";
+    std::string planePathTexture = levelPathPrefix + "textures/Grass.jpg";
+
 
     float LInt = 50.0f;
     glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
@@ -193,6 +211,10 @@ protected:
     DescriptorSet DS_Item;
     ItemMUBO UBOm_Item{};
     ItemPUBO UBOp_Item{};
+    std::string itemPathVert = levelPathPrefix + "shaders/ItemVert.spv";
+    std::string itemPathFrag = levelPathPrefix + "shaders/ItemFrag.spv";
+    std::string itemPathModel = levelPathPrefix + "models/Item.obj";
+    std::string itemPathTexture = levelPathPrefix + "textures/Bricks.jpg";
 
     // Step
     DescriptorSetLayout DSL_Step;
@@ -203,6 +225,10 @@ protected:
     DescriptorSet DS_Step;
     StepMUBO UBOm_Step{};
     StepPUBO UBOp_Step{};
+    std::string stepPathVert = levelPathPrefix + "shaders/StepVert.spv";
+    std::string stepPathFrag = levelPathPrefix + "shaders/StepFrag.spv";
+    std::string stepPathModel = levelPathPrefix + "models/Step.obj";
+    std::string stepPathTexture = levelPathPrefix + "textures/Wood.jpg";
 
     // Iron
     DescriptorSetLayout DSL_Iron;
@@ -213,6 +239,10 @@ protected:
     DescriptorSet DS_Iron;
     IronMUBO UBOm_Iron{};
     IronPUBO UBOp_Iron{};
+    std::string ironPathVert = levelPathPrefix + "shaders/IronVert.spv";
+    std::string ironPathFrag = levelPathPrefix + "shaders/IronFrag.spv";
+    std::string ironPathModel = levelPathPrefix + "models/Iron.obj";
+    std::string ironPathTexture = levelPathPrefix + "textures/Iron.jpg";
 
     // Decoration
     DescriptorSetLayout DSL_Decoration;
@@ -223,7 +253,11 @@ protected:
     DescriptorSet DS_Decoration;
     DecorationMUBO UBOm_Decoration{};
     DecorationPUBO UBOp_Decoration{};
-    
+    std::string decorationPathVert = levelPathPrefix + "shaders/DecorationVert.spv";
+    std::string decorationPathFrag = levelPathPrefix + "shaders/DecorationFrag.spv";
+    std::string decorationPathModel = levelPathPrefix + "models/Decoration.obj";
+    std::string decorationPathTexture = levelPathPrefix + "textures/Marble.jpg";
+
     // Border
     DescriptorSetLayout DSL_Border;
     VertexDescriptor VD_Border;
@@ -232,6 +266,10 @@ protected:
     Texture T_Border;
     DescriptorSet DS_Border;
     BorderMUBO UBOm_Border;
+    std::string borderPathVert = levelPathPrefix + "shaders/BorderVert.spv";
+    std::string borderPathFrag = levelPathPrefix + "shaders/BorderFrag.spv";
+    std::string borderPathModel = levelPathPrefix + "models/Border.obj";
+    std::string borderPathTexture = levelPathPrefix + "textures/Bricks.jpg";
 
     // Wall
     DescriptorSetLayout DSL_Wall;
@@ -242,13 +280,10 @@ protected:
     DescriptorSet DS_Wall;
     WallMUBO UBOm_Wall{};
     WallPUBO UBOp_Wall{};
-
-    // Map
-    static const int mapSize = 1000;
-    float mapHeight[mapSize][mapSize];
-    float mapType[mapSize][mapSize];
-    const float mapGravity = -200.0f;
-    const glm::vec3 mapStartPos = glm::vec3(50.0f, 0.0f, 50.0f);
+    std::string wallPathVert = levelPathPrefix + "shaders/WallVert.spv";
+    std::string wallPathFrag = levelPathPrefix + "shaders/WallFrag.spv";
+    std::string wallPathModel = levelPathPrefix + "models/Wall.obj";
+    std::string wallPathTexture = levelPathPrefix + "textures/Bricks.jpg";
 
     // View
     float viewDistance = 20.0f + sphereRadius;
@@ -294,59 +329,59 @@ protected:
     void localInit() override {
         // Sphere
         DSL_Sphere.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMUBO), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
         VD_Sphere.init(this, {
-            {0, sizeof(SphereVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+                {0, sizeof(SphereVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SphereVertex, pos),sizeof(glm::vec3), POSITION},
-            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(SphereVertex, uv),sizeof(glm::vec2), UV},
-        });
-        P_Sphere.init(this, &VD_Sphere, "shaders/SphereVert.spv", "shaders/SphereFrag.spv", {&DSL_Sphere});
-        M_Sphere.init(this, &VD_Sphere, "models/Sphere.obj", OBJ);
-        T_Sphere.init(this, "textures/Sun.jpg");
+                               {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SphereVertex, pos),sizeof(glm::vec3), POSITION},
+                               {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(SphereVertex, uv),sizeof(glm::vec2), UV},
+                       });
+        P_Sphere.init(this, &VD_Sphere, spherePathVert, spherePathFrag, {&DSL_Sphere});
+        M_Sphere.init(this, &VD_Sphere, spherePathModel, OBJ);
+        T_Sphere.init(this, spherePathTexture);
 
-        spherePos = mapStartPos + glm::vec3(0.0f, sphereRadius, 0.0f);
+        spherePos = levelStart + glm::vec3(0.0f, sphereRadius, 0.0f);
         spherePosOld = spherePos;
         sphereCheckpoint = spherePos;
 
 
         // Plane
         DSL_Plane.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PlanePUBO), 1},
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMUBO), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PlanePUBO), 1},
         });
         VD_Plane.init(this, {
-            {0, sizeof(PlaneVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+                {0, sizeof(PlaneVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, pos), sizeof(glm::vec3), POSITION},
-            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(PlaneVertex, uv), sizeof(glm::vec2), UV},
-            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, norm), sizeof(glm::vec3), NORMAL},
+                              {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, pos), sizeof(glm::vec3), POSITION},
+                              {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(PlaneVertex, uv), sizeof(glm::vec2), UV},
+                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, norm), sizeof(glm::vec3), NORMAL},
 
-        });
-        P_Plane.init(this, &VD_Plane, "shaders/PlaneFrag.spv", "shaders/PlaneVert.spv", {&DSL_Plane});
-        M_Plane.init(this, &VD_Plane, "models/Plane.obj", OBJ);
-        T_Plane.init(this, "textures/Grass.jpg");
+                      });
+        P_Plane.init(this, &VD_Plane, planePathFrag, planePathVert, {&DSL_Plane});
+        M_Plane.init(this, &VD_Plane, planePathModel, OBJ);
+        T_Plane.init(this, planePathTexture);
 
 
         // Item
         DSL_Item.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ItemPUBO), 1},
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ItemPUBO), 1},
         });
         VD_Item.init(this, {
-            {0, sizeof(ItemVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+                {0, sizeof(ItemVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, pos), sizeof(glm::vec3), POSITION},
-            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
-            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
-        });
-        P_Item.init(this, &VD_Item, "shaders/ItemFrag.spv", "shaders/ItemVert.spv", {&DSL_Item});
-        M_Item.init(this, &VD_Item, "models/Item.obj", OBJ);
-        T_Item.init(this, "textures/Bricks.jpg");
+                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, pos), sizeof(glm::vec3), POSITION},
+                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
+                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
+                     });
+        P_Item.init(this, &VD_Item, itemPathFrag, itemPathVert, {&DSL_Item});
+        M_Item.init(this, &VD_Item, itemPathModel, OBJ);
+        T_Item.init(this, itemPathTexture);
 
 
         // Step
@@ -362,9 +397,9 @@ protected:
                              {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(StepVertex, uv), sizeof(glm::vec2), UV},
                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, norm), sizeof(glm::vec3), NORMAL},
                      });
-        P_Step.init(this, &VD_Step, "shaders/StepFrag.spv", "shaders/StepVert.spv", {&DSL_Step});
-        M_Step.init(this, &VD_Step, "models/Step.obj", OBJ);
-        T_Step.init(this, "textures/Wood.jpg");
+        P_Step.init(this, &VD_Step, stepPathFrag, stepPathVert, {&DSL_Step});
+        M_Step.init(this, &VD_Step, stepPathModel, OBJ);
+        T_Step.init(this, stepPathTexture);
 
 
         // Iron
@@ -380,9 +415,9 @@ protected:
                              {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(IronVertex, uv), sizeof(glm::vec2), UV},
                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, norm), sizeof(glm::vec3), NORMAL},
                      });
-        P_Iron.init(this, &VD_Iron, "shaders/IronFrag.spv", "shaders/IronVert.spv", {&DSL_Iron});
-        M_Iron.init(this, &VD_Iron, "models/Iron.obj", OBJ);
-        T_Iron.init(this, "textures/Iron.jpg");
+        P_Iron.init(this, &VD_Iron, ironPathFrag, ironPathVert, {&DSL_Iron});
+        M_Iron.init(this, &VD_Iron, ironPathModel, OBJ);
+        T_Iron.init(this, ironPathTexture);
 
 
         // Decoration
@@ -394,49 +429,49 @@ protected:
         VD_Decoration.init(this, {
                 {0, sizeof(DecorationVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, pos), sizeof(glm::vec3), POSITION},
-                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(DecorationVertex, uv), sizeof(glm::vec2), UV},
-                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, norm), sizeof(glm::vec3), NORMAL},
-                     });
-        P_Decoration.init(this, &VD_Decoration, "shaders/DecorationFrag.spv", "shaders/DecorationVert.spv", {&DSL_Decoration});
-        M_Decoration.init(this, &VD_Decoration, "models/Decoration.obj", OBJ);
-        T_Decoration.init(this, "textures/Marble.jpg");
+                                   {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, pos), sizeof(glm::vec3), POSITION},
+                                   {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(DecorationVertex, uv), sizeof(glm::vec2), UV},
+                                   {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, norm), sizeof(glm::vec3), NORMAL},
+                           });
+        P_Decoration.init(this, &VD_Decoration, decorationPathFrag, decorationPathVert, {&DSL_Decoration});
+        M_Decoration.init(this, &VD_Decoration, decorationPathModel, OBJ);
+        T_Decoration.init(this, decorationPathTexture);
 
 
         // Border
         DSL_Border.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
         });
         VD_Border.init(this, {
-            {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+                {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, pos),  sizeof(glm::vec3), POSITION},
-            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderVertex, uv),      sizeof(glm::vec2), UV},
-            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
-        });
-        P_Border.init(this, &VD_Border, "shaders/BorderFrag.spv", "shaders/BorderVert.spv", {&DSL_Border});
-        M_Border.init(this, &VD_Border, "models/Border.obj", OBJ);
-        T_Border.init(this, "textures/Bricks.jpg");
+                               {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, pos),  sizeof(glm::vec3), POSITION},
+                               {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderVertex, uv),      sizeof(glm::vec2), UV},
+                               {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
+                       });
+        P_Border.init(this, &VD_Border, borderPathFrag, borderPathVert, {&DSL_Border});
+        M_Border.init(this, &VD_Border, borderPathModel, OBJ);
+        T_Border.init(this, borderPathTexture);
 
 
         // Wall
         DSL_Wall.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,        1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,        1},
+                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
         });
         VD_Wall.init(this, {
-            {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+                {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, pos),  sizeof(glm::vec3), POSITION},
-            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
-            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
-        });
-        P_Wall.init(this, &VD_Wall, "shaders/WallFrag.spv", "shaders/WallVert.spv", {&DSL_Wall});
-        M_Wall.init(this, &VD_Wall, "models/Wall.obj", OBJ);
-        T_Wall.init(this, "textures/Bricks.jpg");
+                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, pos),  sizeof(glm::vec3), POSITION},
+                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
+                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
+                     });
+        P_Wall.init(this, &VD_Wall, wallPathFrag, wallPathVert, {&DSL_Wall});
+        M_Wall.init(this, &VD_Wall, wallPathModel, OBJ);
+        T_Wall.init(this, wallPathTexture);
 
 
         // Map
@@ -457,7 +492,7 @@ protected:
 
     void mapInit() {
         // Height initialization
-        std::ifstream heightJsonFile("jsons/Height.json");
+        std::ifstream heightJsonFile(levelPathHeight);
         nlohmann::json heightJson;
         heightJsonFile >> heightJson;
         for (const auto& loop : heightJson["loops"]) {
@@ -468,13 +503,13 @@ protected:
             float height = loop["height"];
             for (int i = iStart; i < iEnd; i++) {
                 for (int j = jStart; j < jEnd; j++) {
-                    mapHeight[i][j] = height;
+                    levelHeight[i][j] = height;
                 }
             }
         }
 
         // Type initialization
-        std::ifstream itemsJsonFile("jsons/Type.json");
+        std::ifstream itemsJsonFile(levelPathType);
         nlohmann::json itemsJson;
         itemsJsonFile >> itemsJson;
         for (const auto& loop : itemsJson["loops"]) {
@@ -485,7 +520,7 @@ protected:
             float type = loop["type"];
             for (int i = iStart; i < iEnd; i++) {
                 for (int j = jStart; j < jEnd; j++) {
-                    mapType[i][j] = type;
+                    levelType[i][j] = type;
                 }
             }
         }
@@ -745,19 +780,19 @@ protected:
             sphereJumping = true;
         }
         if (rotationInput.z == -1.0f  && sphereOnGround()) {
-            if (mapType[(int)spherePos.x][(int)spherePos.z] == 1.0f) {
+            if (levelType[(int)spherePos.x][(int)spherePos.z] == 1.0f) {
                 sphereCheckpoint = spherePos;
             }
-            if (mapType[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
+            if (levelType[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
                 sphereAccel = sphereAccelSuper;
                 sphereAccelUp = sphereAccelUpSuper;
                 sphereJump = sphereJumpSuper;
             }
-            if (mapType[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
+            if (levelType[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
                 viewDistance = viewDistanceSuper;
                 viewHeight = viewHeightSuper;
             }
-            if (mapType[(int)spherePos.x][(int)spherePos.z] == 4.0f) {
+            if (levelType[(int)spherePos.x][(int)spherePos.z] == 4.0f) {
                 textFinishIndex = 1;
                 sphereAccel = 0.0f;
                 sphereJump = 0.0f;
@@ -788,10 +823,10 @@ protected:
         float y = spherePos.y + viewHeight + viewDistance * glm::sin(viewElevation);
 
         // Collision detection
-        if (mapHeight[(int)x][(int)viewPosOld.z] > spherePos.y) {
+        if (levelHeight[(int)x][(int)viewPosOld.z] > spherePos.y) {
             x = viewPosOld.x;
             viewPosLock.x = 1.0f;
-        } else if (mapHeight[(int)viewPosOld.x][(int)z] > spherePos.y) {
+        } else if (levelHeight[(int)viewPosOld.x][(int)z] > spherePos.y) {
             z = viewPosOld.z;
             viewPosLock.z = 1.0f;
         }
@@ -805,19 +840,19 @@ protected:
 
     void updateSphereVariables(float deltaTime) {
         // Type check
-        if (mapType[(int)spherePos.x][(int)spherePos.z] == 1.0 && sphereOnGround()) {
+        if (levelType[(int)spherePos.x][(int)spherePos.z] == 1.0 && sphereOnGround()) {
             textMessageIndex = 1;
             RebuildPipeline();
-        } else if (mapType[(int)spherePos.x][(int)spherePos.z] == 2.0 && sphereOnGround()) {
+        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 2.0 && sphereOnGround()) {
             textMessageIndex = 2;
             RebuildPipeline();
-        } else if (mapType[(int)spherePos.x][(int)spherePos.z] == 3.0 && sphereOnGround()) {
+        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 3.0 && sphereOnGround()) {
             textMessageIndex = 3;
             RebuildPipeline();
-        } else if (mapType[(int)spherePos.x][(int)spherePos.z] == 4.0 && sphereOnGround()) {
+        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 4.0 && sphereOnGround()) {
             textMessageIndex = 4;
             RebuildPipeline();
-        } else if (mapType[(int)spherePos.x][(int)spherePos.z] == 5.0 && sphereOnGround()) {
+        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0 && sphereOnGround()) {
             spherePos = sphereCheckpoint;
             sphereLives--;
             if (sphereLives == 0) {
@@ -837,8 +872,8 @@ protected:
                 sphereGoingUp = false;
             }
         }
-        else if (spherePos.y > mapHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
-            spherePosAccel.y = mapGravity;
+        else if (spherePos.y > levelHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius) {
+            spherePosAccel.y = sphereGravity;
             spherePosSpeed.y += spherePosAccel.y * deltaTime;
             spherePos.y += spherePosSpeed.y * deltaTime;
             sphereJumping = true;
@@ -846,7 +881,7 @@ protected:
         else {
             spherePosAccel.y = 0.0f;
             spherePosSpeed.y = 0.0f;
-            spherePos.y = mapHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius;
+            spherePos.y = levelHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius;
             sphereJumping = false;
         }
 
@@ -860,19 +895,19 @@ protected:
         spherePosSpeed.z *= sphereFriction;
 
         // Collision detection
-        if (mapHeight[(int)(spherePos.x + sphereRadius)][(int)(spherePosOld.z)] > spherePos.y) {
+        if (levelHeight[(int)(spherePos.x + sphereRadius)][(int)(spherePosOld.z)] > spherePos.y) {
             if (spherePosSpeed.x >= 0.0f)
                 spherePos.x = spherePosOld.x;
         }
-        else if (mapHeight[(int)(spherePos.x - sphereRadius)][(int)(spherePosOld.z)] > spherePos.y) {
+        else if (levelHeight[(int)(spherePos.x - sphereRadius)][(int)(spherePosOld.z)] > spherePos.y) {
             if (spherePosSpeed.x <= 0.0f)
                 spherePos.x = spherePosOld.x;
         }
-        if (mapHeight[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > spherePos.y) {
+        if (levelHeight[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > spherePos.y) {
             if (spherePosSpeed.z >= 0.0f)
                 spherePos.z = spherePosOld.z;
         }
-        else if (mapHeight[(int)(spherePos.x)][(int)(spherePosOld.z - sphereRadius)] > spherePos.y) {
+        else if (levelHeight[(int)(spherePos.x)][(int)(spherePosOld.z - sphereRadius)] > spherePos.y) {
             if (spherePosSpeed.z <= 0.0f)
                 spherePos.z = spherePosOld.z;
         }
@@ -892,7 +927,7 @@ protected:
     }
 
     bool sphereOnGround() {
-        if (mapHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius == spherePos.y)
+        if (levelHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius == spherePos.y)
             return true;
         else
             return false;
@@ -978,6 +1013,23 @@ protected:
         DS_Border.map(currentImage, &UBOp_Wall, 2);
         DS_Wall.map(currentImage, &UBOp_Wall, 2);
     }
+};
+
+class Level1 : public Level {
+public:
+    Level1() {
+
+        spherePos = glm::vec3(0.0f, 0.0f, 0.0f);
+    }
+
+};
+
+class Level2 : public Level {
+public:
+    Level2() {
+        spherePos = glm::vec3(0.0f, 0.0f, 0.0f);
+    }
+
 };
 
 
