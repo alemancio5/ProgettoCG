@@ -106,7 +106,7 @@
         "start": 440,
         "end": 800
       },
-      "height": 40.0
+      "height": 120.0
     },
     {
       "description": "Wall #5",
@@ -393,6 +393,90 @@
       "j": {
         "start": 220,
         "end": 240
+      },
+      "height": 20.0
+    },
+    {
+      "description": "Step #14",
+      "i": {
+        "start": 240,
+        "end": 260
+      },
+      "j": {
+        "start": 940,
+        "end": 960
+      },
+      "height": 20.0
+    },
+    {
+      "description": "Step #15",
+      "i": {
+        "start": 490,
+        "end": 510
+      },
+      "j": {
+        "start": 160,
+        "end": 180
+      },
+      "height": 20.0
+    },
+    {
+      "description": "Step #16",
+      "i": {
+        "start": 510,
+        "end": 530
+      },
+      "j": {
+        "start": 160,
+        "end": 180
+      },
+      "height": 40.0
+    },
+    {
+      "description": "Step #17",
+      "i": {
+        "start": 530,
+        "end": 550
+      },
+      "j": {
+        "start": 160,
+        "end": 180
+      },
+      "height": 60.0
+    },
+    {
+      "description": "Step #18",
+      "i": {
+        "start": 550,
+        "end": 570
+      },
+      "j": {
+        "start": 160,
+        "end": 180
+      },
+      "height": 80.0
+    },
+    {
+      "description": "Step #19",
+      "i": {
+        "start": 570,
+        "end": 590
+      },
+      "j": {
+        "start": 160,
+        "end": 180
+      },
+      "height": 100.0
+    },
+    {
+      "description": "Step #20",
+      "i": {
+        "start": 240,
+        "end": 260
+      },
+      "j": {
+        "start": 960,
+        "end": 980
       },
       "height": 20.0
     }
