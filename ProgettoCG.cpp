@@ -178,10 +178,10 @@ protected:
     glm::quat sphereRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotAccel = glm::vec3(0.0f, 0.0f, 0.0f);
-    std::string spherePathVert = levelPathPrefix + "shaders/SphereVert.spv";
-    std::string spherePathFrag = levelPathPrefix + "shaders/SphereFrag.spv";
-    std::string spherePathModel = levelPathPrefix + "models/Sphere.obj";
-    std::string spherePathTexture = levelPathPrefix + "textures/Sun.jpg";
+    std::string spherePathVert = "shaders/SphereVert.spv";
+    std::string spherePathFrag = "shaders/SphereFrag.spv";
+    std::string spherePathModel = "models/Sphere.obj";
+    std::string spherePathTexture = "textures/Sun.jpg";
 
     // Plane
     DescriptorSetLayout DSL_Plane;
@@ -192,10 +192,10 @@ protected:
     DescriptorSet DS_Plane;
     PlaneMUBO UBOm_Plane{};
     PlanePUBO UBOp_Plane{};
-    std::string planePathVert = levelPathPrefix + "shaders/PlaneVert.spv";
-    std::string planePathFrag = levelPathPrefix + "shaders/PlaneFrag.spv";
-    std::string planePathModel = levelPathPrefix + "models/Plane.obj";
-    std::string planePathTexture = levelPathPrefix + "textures/Grass.jpg";
+    std::string planePathVert = "shaders/PlaneVert.spv";
+    std::string planePathFrag = "shaders/PlaneFrag.spv";
+    std::string planePathModel = "models/Plane.obj";
+    std::string planePathTexture = "textures/Grass.jpg";
 
 
     float LInt = 50.0f;
@@ -211,10 +211,10 @@ protected:
     DescriptorSet DS_Item;
     ItemMUBO UBOm_Item{};
     ItemPUBO UBOp_Item{};
-    std::string itemPathVert = levelPathPrefix + "shaders/ItemVert.spv";
-    std::string itemPathFrag = levelPathPrefix + "shaders/ItemFrag.spv";
-    std::string itemPathModel = levelPathPrefix + "models/Item.obj";
-    std::string itemPathTexture = levelPathPrefix + "textures/Bricks.jpg";
+    std::string itemPathVert = "shaders/ItemVert.spv";
+    std::string itemPathFrag = "shaders/ItemFrag.spv";
+    std::string itemPathModel = "models/Item.obj";
+    std::string itemPathTexture = "textures/Bricks.jpg";
 
     // Step
     DescriptorSetLayout DSL_Step;
@@ -225,10 +225,10 @@ protected:
     DescriptorSet DS_Step;
     StepMUBO UBOm_Step{};
     StepPUBO UBOp_Step{};
-    std::string stepPathVert = levelPathPrefix + "shaders/StepVert.spv";
-    std::string stepPathFrag = levelPathPrefix + "shaders/StepFrag.spv";
-    std::string stepPathModel = levelPathPrefix + "models/Step.obj";
-    std::string stepPathTexture = levelPathPrefix + "textures/Wood.jpg";
+    std::string stepPathVert = "shaders/StepVert.spv";
+    std::string stepPathFrag = "shaders/StepFrag.spv";
+    std::string stepPathModel = "models/Step.obj";
+    std::string stepPathTexture = "textures/Wood.jpg";
 
     // Iron
     DescriptorSetLayout DSL_Iron;
@@ -239,10 +239,10 @@ protected:
     DescriptorSet DS_Iron;
     IronMUBO UBOm_Iron{};
     IronPUBO UBOp_Iron{};
-    std::string ironPathVert = levelPathPrefix + "shaders/IronVert.spv";
-    std::string ironPathFrag = levelPathPrefix + "shaders/IronFrag.spv";
-    std::string ironPathModel = levelPathPrefix + "models/Iron.obj";
-    std::string ironPathTexture = levelPathPrefix + "textures/Iron.jpg";
+    std::string ironPathVert = "shaders/IronVert.spv";
+    std::string ironPathFrag = "shaders/IronFrag.spv";
+    std::string ironPathModel = "models/Iron.obj";
+    std::string ironPathTexture = "textures/Iron.jpg";
 
     // Decoration
     DescriptorSetLayout DSL_Decoration;
@@ -253,10 +253,10 @@ protected:
     DescriptorSet DS_Decoration;
     DecorationMUBO UBOm_Decoration{};
     DecorationPUBO UBOp_Decoration{};
-    std::string decorationPathVert = levelPathPrefix + "shaders/DecorationVert.spv";
-    std::string decorationPathFrag = levelPathPrefix + "shaders/DecorationFrag.spv";
-    std::string decorationPathModel = levelPathPrefix + "models/Decoration.obj";
-    std::string decorationPathTexture = levelPathPrefix + "textures/Marble.jpg";
+    std::string decorationPathVert = "shaders/DecorationVert.spv";
+    std::string decorationPathFrag = "shaders/DecorationFrag.spv";
+    std::string decorationPathModel = "models/Decoration.obj";
+    std::string decorationPathTexture = "textures/Marble.jpg";
 
     // Border
     DescriptorSetLayout DSL_Border;
@@ -266,10 +266,10 @@ protected:
     Texture T_Border;
     DescriptorSet DS_Border;
     BorderMUBO UBOm_Border;
-    std::string borderPathVert = levelPathPrefix + "shaders/BorderVert.spv";
-    std::string borderPathFrag = levelPathPrefix + "shaders/BorderFrag.spv";
-    std::string borderPathModel = levelPathPrefix + "models/Border.obj";
-    std::string borderPathTexture = levelPathPrefix + "textures/Bricks.jpg";
+    std::string borderPathVert = "shaders/BorderVert.spv";
+    std::string borderPathFrag = "shaders/BorderFrag.spv";
+    std::string borderPathModel = "models/Border.obj";
+    std::string borderPathTexture = "textures/Bricks.jpg";
 
     // Wall
     DescriptorSetLayout DSL_Wall;
@@ -280,10 +280,10 @@ protected:
     DescriptorSet DS_Wall;
     WallMUBO UBOm_Wall{};
     WallPUBO UBOp_Wall{};
-    std::string wallPathVert = levelPathPrefix + "shaders/WallVert.spv";
-    std::string wallPathFrag = levelPathPrefix + "shaders/WallFrag.spv";
-    std::string wallPathModel = levelPathPrefix + "models/Wall.obj";
-    std::string wallPathTexture = levelPathPrefix + "textures/Bricks.jpg";
+    std::string wallPathVert = "shaders/WallVert.spv";
+    std::string wallPathFrag = "shaders/WallFrag.spv";
+    std::string wallPathModel = "models/Wall.obj";
+    std::string wallPathTexture = "textures/Bricks.jpg";
 
     // View
     float viewDistance = 20.0f + sphereRadius;
@@ -338,8 +338,8 @@ protected:
                                {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SphereVertex, pos),sizeof(glm::vec3), POSITION},
                                {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(SphereVertex, uv),sizeof(glm::vec2), UV},
                        });
-        P_Sphere.init(this, &VD_Sphere, spherePathVert, spherePathFrag, {&DSL_Sphere});
-        M_Sphere.init(this, &VD_Sphere, spherePathModel, OBJ);
+        P_Sphere.init(this, &VD_Sphere,  spherePathVert, spherePathFrag, {&DSL_Sphere});
+        M_Sphere.init(this, &VD_Sphere, levelPathPrefix + spherePathModel, OBJ);
         T_Sphere.init(this, spherePathTexture);
 
         spherePos = levelStart + glm::vec3(0.0f, sphereRadius, 0.0f);
@@ -362,7 +362,7 @@ protected:
 
                       });
         P_Plane.init(this, &VD_Plane, planePathFrag, planePathVert, {&DSL_Plane});
-        M_Plane.init(this, &VD_Plane, planePathModel, OBJ);
+        M_Plane.init(this, &VD_Plane, levelPathPrefix + planePathModel, OBJ);
         T_Plane.init(this, planePathTexture);
 
 
@@ -380,7 +380,7 @@ protected:
                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
                      });
         P_Item.init(this, &VD_Item, itemPathFrag, itemPathVert, {&DSL_Item});
-        M_Item.init(this, &VD_Item, itemPathModel, OBJ);
+        M_Item.init(this, &VD_Item, levelPathPrefix + itemPathModel, OBJ);
         T_Item.init(this, itemPathTexture);
 
 
@@ -398,7 +398,7 @@ protected:
                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, norm), sizeof(glm::vec3), NORMAL},
                      });
         P_Step.init(this, &VD_Step, stepPathFrag, stepPathVert, {&DSL_Step});
-        M_Step.init(this, &VD_Step, stepPathModel, OBJ);
+        M_Step.init(this, &VD_Step, levelPathPrefix + stepPathModel, OBJ);
         T_Step.init(this, stepPathTexture);
 
 
@@ -416,7 +416,7 @@ protected:
                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, norm), sizeof(glm::vec3), NORMAL},
                      });
         P_Iron.init(this, &VD_Iron, ironPathFrag, ironPathVert, {&DSL_Iron});
-        M_Iron.init(this, &VD_Iron, ironPathModel, OBJ);
+        M_Iron.init(this, &VD_Iron, levelPathPrefix + ironPathModel, OBJ);
         T_Iron.init(this, ironPathTexture);
 
 
@@ -434,7 +434,7 @@ protected:
                                    {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, norm), sizeof(glm::vec3), NORMAL},
                            });
         P_Decoration.init(this, &VD_Decoration, decorationPathFrag, decorationPathVert, {&DSL_Decoration});
-        M_Decoration.init(this, &VD_Decoration, decorationPathModel, OBJ);
+        M_Decoration.init(this, &VD_Decoration, levelPathPrefix + decorationPathModel, OBJ);
         T_Decoration.init(this, decorationPathTexture);
 
 
@@ -452,7 +452,7 @@ protected:
                                {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
                        });
         P_Border.init(this, &VD_Border, borderPathFrag, borderPathVert, {&DSL_Border});
-        M_Border.init(this, &VD_Border, borderPathModel, OBJ);
+        M_Border.init(this, &VD_Border, levelPathPrefix + borderPathModel, OBJ);
         T_Border.init(this, borderPathTexture);
 
 
@@ -470,7 +470,7 @@ protected:
                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
                      });
         P_Wall.init(this, &VD_Wall, wallPathFrag, wallPathVert, {&DSL_Wall});
-        M_Wall.init(this, &VD_Wall, wallPathModel, OBJ);
+        M_Wall.init(this, &VD_Wall, levelPathPrefix + wallPathModel, OBJ);
         T_Wall.init(this, wallPathTexture);
 
 
@@ -492,7 +492,7 @@ protected:
 
     void mapInit() {
         // Height initialization
-        std::ifstream heightJsonFile(levelPathHeight);
+        std::ifstream heightJsonFile(levelPathPrefix + levelPathHeight);
         nlohmann::json heightJson;
         heightJsonFile >> heightJson;
         for (const auto& loop : heightJson["loops"]) {
@@ -509,7 +509,7 @@ protected:
         }
 
         // Type initialization
-        std::ifstream itemsJsonFile(levelPathType);
+        std::ifstream itemsJsonFile(levelPathPrefix + levelPathType);
         nlohmann::json itemsJson;
         itemsJsonFile >> itemsJson;
         for (const auto& loop : itemsJson["loops"]) {
@@ -1018,8 +1018,7 @@ protected:
 class Level1 : public Level {
 public:
     Level1() {
-
-        spherePos = glm::vec3(0.0f, 0.0f, 0.0f);
+        levelPathPrefix = "levels/level1/";
     }
 
 };
