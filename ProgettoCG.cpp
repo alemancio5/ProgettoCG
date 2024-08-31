@@ -14,7 +14,8 @@ std::vector<SingleText> textMessage = {
     {2, {"", "E: SUPER SPEED", "",""}, 0, 0},
     {2, {"", "E: SUPER VIEW", "",""}, 0, 0},
     {2, {"", "E: WIN", "",""}, 0, 0},
-    {2, {"", "YOU WIN", "",""}, 0, 0}
+    {2, {"", "YOU WIN", "",""}, 0, 0},
+    {2, {"", "DONE!", "",""}, 0, 0}
 };
 std::vector<SingleText> textFinish = {
     {3, {"", "", "",""}, 0, 0},
@@ -327,17 +328,21 @@ protected:
     }
 
     void localInit() override {
+        // Level
+        levelInit();
+
+
         // Sphere
         DSL_Sphere.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
         VD_Sphere.init(this, {
-                {0, sizeof(SphereVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+            {0, sizeof(SphereVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                               {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SphereVertex, pos),sizeof(glm::vec3), POSITION},
-                               {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(SphereVertex, uv),sizeof(glm::vec2), UV},
-                       });
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SphereVertex, pos),sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(SphereVertex, uv),sizeof(glm::vec2), UV},
+        });
         P_Sphere.init(this, &VD_Sphere,  spherePathVert, spherePathFrag, {&DSL_Sphere});
         M_Sphere.init(this, &VD_Sphere, levelPathPrefix + spherePathModel, OBJ);
         T_Sphere.init(this, levelPathPrefix + spherePathTexture);
@@ -349,18 +354,17 @@ protected:
 
         // Plane
         DSL_Plane.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PlanePUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PlanePUBO), 1},
         });
         VD_Plane.init(this, {
-                {0, sizeof(PlaneVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+            {0, sizeof(PlaneVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                              {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, pos), sizeof(glm::vec3), POSITION},
-                              {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(PlaneVertex, uv), sizeof(glm::vec2), UV},
-                              {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, norm), sizeof(glm::vec3), NORMAL},
-
-                      });
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, pos), sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(PlaneVertex, uv), sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, norm), sizeof(glm::vec3), NORMAL}
+        });
         P_Plane.init(this, &VD_Plane, planePathFrag, planePathVert, {&DSL_Plane});
         M_Plane.init(this, &VD_Plane, levelPathPrefix + planePathModel, OBJ);
         T_Plane.init(this, levelPathPrefix + planePathTexture);
@@ -368,17 +372,17 @@ protected:
 
         // Item
         DSL_Item.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ItemPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ItemPUBO), 1},
         });
         VD_Item.init(this, {
-                {0, sizeof(ItemVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+            {0, sizeof(ItemVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, pos), sizeof(glm::vec3), POSITION},
-                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
-                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
-                     });
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, pos), sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
+        });
         P_Item.init(this, &VD_Item, itemPathFrag, itemPathVert, {&DSL_Item});
         M_Item.init(this, &VD_Item, levelPathPrefix + itemPathModel, OBJ);
         T_Item.init(this, levelPathPrefix + itemPathTexture);
@@ -386,17 +390,17 @@ protected:
 
         // Step
         DSL_Step.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(StepMUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(StepPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(StepMUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(StepPUBO), 1},
         });
         VD_Step.init(this, {
-                {0, sizeof(StepVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+            {0, sizeof(StepVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, pos), sizeof(glm::vec3), POSITION},
-                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(StepVertex, uv), sizeof(glm::vec2), UV},
-                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, norm), sizeof(glm::vec3), NORMAL},
-                     });
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, pos), sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(StepVertex, uv), sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, norm), sizeof(glm::vec3), NORMAL},
+        });
         P_Step.init(this, &VD_Step, stepPathFrag, stepPathVert, {&DSL_Step});
         M_Step.init(this, &VD_Step, levelPathPrefix + stepPathModel, OBJ);
         T_Step.init(this, levelPathPrefix + stepPathTexture);
@@ -404,17 +408,17 @@ protected:
 
         // Iron
         DSL_Iron.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(IronMUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IronPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(IronMUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IronPUBO), 1},
         });
         VD_Iron.init(this, {
-                {0, sizeof(IronVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+            {0, sizeof(IronVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, pos), sizeof(glm::vec3), POSITION},
-                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(IronVertex, uv), sizeof(glm::vec2), UV},
-                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, norm), sizeof(glm::vec3), NORMAL},
-                     });
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, pos), sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(IronVertex, uv), sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, norm), sizeof(glm::vec3), NORMAL},
+        });
         P_Iron.init(this, &VD_Iron, ironPathFrag, ironPathVert, {&DSL_Iron});
         M_Iron.init(this, &VD_Iron, levelPathPrefix + ironPathModel, OBJ);
         T_Iron.init(this, levelPathPrefix + ironPathTexture);
@@ -422,17 +426,17 @@ protected:
 
         // Decoration
         DSL_Decoration.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(DecorationMUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DecorationPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(DecorationMUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DecorationPUBO), 1},
         });
         VD_Decoration.init(this, {
-                {0, sizeof(DecorationVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+            {0, sizeof(DecorationVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                                   {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, pos), sizeof(glm::vec3), POSITION},
-                                   {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(DecorationVertex, uv), sizeof(glm::vec2), UV},
-                                   {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, norm), sizeof(glm::vec3), NORMAL},
-                           });
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, pos), sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(DecorationVertex, uv), sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, norm), sizeof(glm::vec3), NORMAL},
+        });
         P_Decoration.init(this, &VD_Decoration, decorationPathFrag, decorationPathVert, {&DSL_Decoration});
         M_Decoration.init(this, &VD_Decoration, levelPathPrefix + decorationPathModel, OBJ);
         T_Decoration.init(this, levelPathPrefix + decorationPathTexture);
@@ -440,17 +444,17 @@ protected:
 
         // Border
         DSL_Border.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
         });
         VD_Border.init(this, {
                 {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                               {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, pos),  sizeof(glm::vec3), POSITION},
-                               {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderVertex, uv),      sizeof(glm::vec2), UV},
-                               {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
-                       });
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, pos),  sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderVertex, uv),      sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
+        });
         P_Border.init(this, &VD_Border, borderPathFrag, borderPathVert, {&DSL_Border});
         M_Border.init(this, &VD_Border, levelPathPrefix + borderPathModel, OBJ);
         T_Border.init(this, levelPathPrefix + borderPathTexture);
@@ -458,24 +462,20 @@ protected:
 
         // Wall
         DSL_Wall.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,        1},
-                {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,        1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
         });
         VD_Wall.init(this, {
-                {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+            {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
-                             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, pos),  sizeof(glm::vec3), POSITION},
-                             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
-                             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
-                     });
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, pos),  sizeof(glm::vec3), POSITION},
+            {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
+            {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
+        });
         P_Wall.init(this, &VD_Wall, wallPathFrag, wallPathVert, {&DSL_Wall});
         M_Wall.init(this, &VD_Wall, levelPathPrefix + wallPathModel, OBJ);
         T_Wall.init(this, levelPathPrefix + wallPathTexture);
-
-
-        // Map
-        mapInit();
 
 
         // Text
@@ -490,7 +490,7 @@ protected:
         DPSZs.setsInPool = 11;
     }
 
-    void mapInit() {
+    void levelInit() {
         // Height initialization
         std::ifstream heightJsonFile(levelPathPrefix + levelPathHeight);
         nlohmann::json heightJson;
@@ -551,11 +551,11 @@ protected:
         P_Decoration.create();
         DS_Decoration.init(this, &DSL_Decoration, {&T_Decoration});
         
-        // Border Wall
+        // Border
         P_Border.create();
         DS_Border.init(this, &DSL_Border, {&T_Border});
 
-        // Border Wall
+        // Wall
         P_Wall.create();
         DS_Wall.init(this, &DSL_Border, {&T_Border});
 
@@ -734,10 +734,6 @@ protected:
         bool fireInput = false;
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
 
-        // Text
-        textMessageIndex = 0;
-        RebuildPipeline();
-
         // Use inputs
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) { // Game exit
             glfwSetWindowShouldClose(window, GL_TRUE);
@@ -800,13 +796,13 @@ protected:
             }
         }
 
-        // View variables update
-        updateViewVariables();
+        // View update
+        updateView();
 
-        // Sphere variables update
-        updateSphereVariables(deltaTime);
+        // Sphere update
+        updateSphere(deltaTime);
 
-        // Projection variables update
+        // Projection update
         projectionMatrix = glm::perspective(glm::radians(75.0f), Ar, 0.1f, 160.0f);
         projectionMatrix[1][1] *= -1;
         projectionViewMatrix = projectionMatrix * viewMatrix;
@@ -815,7 +811,7 @@ protected:
         updateUBO(currentImage);
     }
 
-    void updateViewVariables() {
+    void updateView() {
         // Compute the new view position
         viewPosOld = viewPos;
         float x = spherePos.x + viewDistance * glm::sin(viewAzimuth);
@@ -838,7 +834,7 @@ protected:
         viewDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), glm::sin(viewElevation), glm::cos(viewAzimuth)));
     }
 
-    void updateSphereVariables(float deltaTime) {
+    void updateSphere(float deltaTime) {
         // Type check
         if (levelType[(int)spherePos.x][(int)spherePos.z] == 1.0 && sphereOnGround()) {
             textMessageIndex = 1;
@@ -861,6 +857,9 @@ protected:
                 sphereJump = 0.0f;
                 viewSpeed = 0.0f;
             }
+            RebuildPipeline();
+        } else {
+            textMessageIndex = 0;
             RebuildPipeline();
         }
 
