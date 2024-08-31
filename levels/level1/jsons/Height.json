@@ -1,0 +1,172 @@
+{
+  "loops": [
+    {
+      "description": "Ground",
+      "i": {
+        "start": 0,
+        "end": 400
+      },
+      "j": {
+        "start": 0,
+        "end": 400
+      },
+      "height": 0.0
+    },
+    {
+      "description": "Border #1",
+      "i": {
+        "start": 0,
+        "end": 400
+      },
+      "j": {
+        "start": 0,
+        "end": 20
+      },
+      "height": 120.0
+    },
+    {
+      "description": "Border #2",
+      "i": {
+        "start": 380,
+        "end": 400
+      },
+      "j": {
+        "start": 0,
+        "end": 400
+      },
+      "height": 120.0
+    },
+    {
+      "description": "Border #3",
+      "i": {
+        "start": 0,
+        "end": 400
+      },
+      "j": {
+        "start": 380,
+        "end": 400
+      },
+      "height": 120.0
+    },
+    {
+      "description": "Border #4",
+      "i": {
+        "start": 0,
+        "end": 20
+      },
+      "j": {
+        "start": 0,
+        "end": 400
+      },
+      "height": 120.0
+    },
+    {
+      "description": "Wall #1",
+      "i": {
+        "start": 20,
+        "end": 180
+      },
+      "j": {
+        "start": 90,
+        "end": 110
+      },
+      "height": 80.0
+    },
+    {
+      "description": "Wall #2",
+      "i": {
+        "start": 20,
+        "end": 180
+      },
+      "j": {
+        "start": 190,
+        "end": 210
+      },
+      "height": 80.0
+    },
+    {
+      "description": "Wall #3",
+      "i": {
+        "start": 20,
+        "end": 180
+      },
+      "j": {
+        "start": 290,
+        "end": 310
+      },
+      "height": 80.0
+    },
+    {
+      "description": "Wall #4",
+      "i": {
+        "start": 260,
+        "end": 280
+      },
+      "j": {
+        "start": 170,
+        "end": 330
+      },
+      "height": 80.0
+    },
+    {
+      "description": "Wall #5",
+      "i": {
+        "start": 180,
+        "end": 340
+      },
+      "j": {
+        "start": 190,
+        "end": 210
+      },
+      "height": 80.0
+    },
+    {
+      "description": "Step #1",
+      "i": {
+        "start": 90,
+        "end": 110
+      },
+      "j": {
+        "start": 45,
+        "end": 65
+      },
+      "height": 10.0
+    },
+    {
+      "description": "Step #2",
+      "i": {
+        "start": 200,
+        "end": 220
+      },
+      "j": {
+        "start": 30,
+        "end": 50
+      },
+      "height": 10.0
+    },
+    {
+      "description": "Step #3",
+      "i": {
+        "start": 340,
+        "end": 360
+      },
+      "j": {
+        "start": 170,
+        "end": 190
+      },
+      "height": 20.0
+    },
+    {
+      "description": "Step #4",
+      "i": {
+        "start": 360,
+        "end": 380
+      },
+      "j": {
+        "start": 170,
+        "end": 190
+      },
+      "height": 20.0
+    }
+  ]
+}
