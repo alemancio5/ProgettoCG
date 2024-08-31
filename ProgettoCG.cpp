@@ -1026,7 +1026,7 @@ public:
 class Level2 : public Level {
 public:
     Level2() {
-        spherePos = glm::vec3(0.0f, 0.0f, 0.0f);
+        levelPathPrefix = "levels/level2/";
     }
 
 };
@@ -1034,7 +1034,7 @@ public:
 
 
 int main() {
-    Level1 app;
+    Level2 app;
 
     try {
         app.run();
