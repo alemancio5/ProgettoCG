@@ -181,7 +181,7 @@ protected:
     std::string spherePathVert = "shaders/SphereVert.spv";
     std::string spherePathFrag = "shaders/SphereFrag.spv";
     std::string spherePathModel = "models/Sphere.obj";
-    std::string spherePathTexture = "textures/Sun.jpg";
+    std::string spherePathTexture = "textures/Sphere.jpg";
 
     // Plane
     DescriptorSetLayout DSL_Plane;
@@ -195,7 +195,7 @@ protected:
     std::string planePathVert = "shaders/PlaneVert.spv";
     std::string planePathFrag = "shaders/PlaneFrag.spv";
     std::string planePathModel = "models/Plane.obj";
-    std::string planePathTexture = "textures/Grass.jpg";
+    std::string planePathTexture = "textures/Plane.jpg";
 
 
     float LInt = 50.0f;
@@ -214,7 +214,7 @@ protected:
     std::string itemPathVert = "shaders/ItemVert.spv";
     std::string itemPathFrag = "shaders/ItemFrag.spv";
     std::string itemPathModel = "models/Item.obj";
-    std::string itemPathTexture = "textures/Bricks.jpg";
+    std::string itemPathTexture = "textures/Item.jpg";
 
     // Step
     DescriptorSetLayout DSL_Step;
@@ -228,7 +228,7 @@ protected:
     std::string stepPathVert = "shaders/StepVert.spv";
     std::string stepPathFrag = "shaders/StepFrag.spv";
     std::string stepPathModel = "models/Step.obj";
-    std::string stepPathTexture = "textures/Wood.jpg";
+    std::string stepPathTexture = "textures/Step.jpg";
 
     // Iron
     DescriptorSetLayout DSL_Iron;
@@ -256,7 +256,7 @@ protected:
     std::string decorationPathVert = "shaders/DecorationVert.spv";
     std::string decorationPathFrag = "shaders/DecorationFrag.spv";
     std::string decorationPathModel = "models/Decoration.obj";
-    std::string decorationPathTexture = "textures/Marble.jpg";
+    std::string decorationPathTexture = "textures/Decoration.jpg";
 
     // Border
     DescriptorSetLayout DSL_Border;
@@ -269,7 +269,7 @@ protected:
     std::string borderPathVert = "shaders/BorderVert.spv";
     std::string borderPathFrag = "shaders/BorderFrag.spv";
     std::string borderPathModel = "models/Border.obj";
-    std::string borderPathTexture = "textures/Bricks.jpg";
+    std::string borderPathTexture = "textures/Border.jpg";
 
     // Wall
     DescriptorSetLayout DSL_Wall;
@@ -283,7 +283,7 @@ protected:
     std::string wallPathVert = "shaders/WallVert.spv";
     std::string wallPathFrag = "shaders/WallFrag.spv";
     std::string wallPathModel = "models/Wall.obj";
-    std::string wallPathTexture = "textures/Bricks.jpg";
+    std::string wallPathTexture = "textures/Wall.jpg";
 
     // View
     float viewDistance = 20.0f + sphereRadius;
@@ -340,7 +340,7 @@ protected:
                        });
         P_Sphere.init(this, &VD_Sphere,  spherePathVert, spherePathFrag, {&DSL_Sphere});
         M_Sphere.init(this, &VD_Sphere, levelPathPrefix + spherePathModel, OBJ);
-        T_Sphere.init(this, spherePathTexture);
+        T_Sphere.init(this, levelPathPrefix + spherePathTexture);
 
         spherePos = levelStart + glm::vec3(0.0f, sphereRadius, 0.0f);
         spherePosOld = spherePos;
@@ -363,7 +363,7 @@ protected:
                       });
         P_Plane.init(this, &VD_Plane, planePathFrag, planePathVert, {&DSL_Plane});
         M_Plane.init(this, &VD_Plane, levelPathPrefix + planePathModel, OBJ);
-        T_Plane.init(this, planePathTexture);
+        T_Plane.init(this, levelPathPrefix + planePathTexture);
 
 
         // Item
@@ -381,7 +381,7 @@ protected:
                      });
         P_Item.init(this, &VD_Item, itemPathFrag, itemPathVert, {&DSL_Item});
         M_Item.init(this, &VD_Item, levelPathPrefix + itemPathModel, OBJ);
-        T_Item.init(this, itemPathTexture);
+        T_Item.init(this, levelPathPrefix + itemPathTexture);
 
 
         // Step
@@ -399,7 +399,7 @@ protected:
                      });
         P_Step.init(this, &VD_Step, stepPathFrag, stepPathVert, {&DSL_Step});
         M_Step.init(this, &VD_Step, levelPathPrefix + stepPathModel, OBJ);
-        T_Step.init(this, stepPathTexture);
+        T_Step.init(this, levelPathPrefix + stepPathTexture);
 
 
         // Iron
@@ -417,7 +417,7 @@ protected:
                      });
         P_Iron.init(this, &VD_Iron, ironPathFrag, ironPathVert, {&DSL_Iron});
         M_Iron.init(this, &VD_Iron, levelPathPrefix + ironPathModel, OBJ);
-        T_Iron.init(this, ironPathTexture);
+        T_Iron.init(this, levelPathPrefix + ironPathTexture);
 
 
         // Decoration
@@ -435,7 +435,7 @@ protected:
                            });
         P_Decoration.init(this, &VD_Decoration, decorationPathFrag, decorationPathVert, {&DSL_Decoration});
         M_Decoration.init(this, &VD_Decoration, levelPathPrefix + decorationPathModel, OBJ);
-        T_Decoration.init(this, decorationPathTexture);
+        T_Decoration.init(this, levelPathPrefix + decorationPathTexture);
 
 
         // Border
@@ -453,7 +453,7 @@ protected:
                        });
         P_Border.init(this, &VD_Border, borderPathFrag, borderPathVert, {&DSL_Border});
         M_Border.init(this, &VD_Border, levelPathPrefix + borderPathModel, OBJ);
-        T_Border.init(this, borderPathTexture);
+        T_Border.init(this, levelPathPrefix + borderPathTexture);
 
 
         // Wall
@@ -471,7 +471,7 @@ protected:
                      });
         P_Wall.init(this, &VD_Wall, wallPathFrag, wallPathVert, {&DSL_Wall});
         M_Wall.init(this, &VD_Wall, levelPathPrefix + wallPathModel, OBJ);
-        T_Wall.init(this, wallPathTexture);
+        T_Wall.init(this, levelPathPrefix + wallPathTexture);
 
 
         // Map
@@ -1034,7 +1034,7 @@ public:
 
 
 int main() {
-    Level2 app;
+    Level1 app;
 
     try {
         app.run();
