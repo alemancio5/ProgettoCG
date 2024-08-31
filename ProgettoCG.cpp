@@ -1034,7 +1034,7 @@ public:
 
 
 int main() {
-    Level1 app;
+    Level2 app;
 
     try {
         app.run();
