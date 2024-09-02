@@ -4,11 +4,11 @@
       "description": "Ground",
       "i": {
         "start": 0,
-        "end": 1000
+        "end": 400
       },
       "j": {
         "start": 0,
-        "end": 1000
+        "end": 400
       },
       "type": 0.0
     },

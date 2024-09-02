@@ -142,7 +142,7 @@ class Level : public BaseProject {
 protected:
 
     // Level
-    static const int levelSize = 1000;
+    static const int levelSize = 450;
     float levelHeight[levelSize][levelSize];
     float levelType[levelSize][levelSize];
     const glm::vec3 levelStart = glm::vec3(50.0f, 0.0f, 50.0f);
@@ -754,13 +754,13 @@ protected:
             if (viewElevation < viewElevationMin)
                 viewElevation = viewElevationMin;
         }
-        if (movementInput.z == -1.0f) { // Sphere forward movement
+        if (movementInput.z == -1.0f) { // Sphere forward
             if (sphereOnGround()) {
                 spherePosAccel = -viewDir * sphereAccel;
             } else {
                 spherePosAccel = -viewDir * sphereAccelUp;
             }
-        } else if (movementInput.z == 1.0f) { // Sphere backward movement
+        } else if (movementInput.z == 1.0f) { // Sphere backward
             if (sphereOnGround()) {
                 spherePosAccel = viewDir * sphereAccel;
             } else {
@@ -775,7 +775,7 @@ protected:
             sphereGoingUp = true;
             sphereJumping = true;
         }
-        if (rotationInput.z == -1.0f  && sphereOnGround()) {
+        if (rotationInput.z == -1.0f  && sphereOnGround()) { // Interact
             if (levelType[(int)spherePos.x][(int)spherePos.z] == 1.0f) {
                 sphereCheckpoint = spherePos;
             }
