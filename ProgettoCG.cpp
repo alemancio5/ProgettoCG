@@ -142,7 +142,7 @@ class Level : public BaseProject {
 protected:
 
     // Level
-    static const int levelSize = 40;
+    static const int levelSize = 100;
     float levelHeight[levelSize][levelSize];
     float levelType[levelSize][levelSize];
     const glm::vec3 levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
@@ -161,15 +161,15 @@ protected:
     bool sphereJumping = false;
     bool sphereGoingUp = false;
     int sphereLives = 3;
-    float sphereAccel = 280.0f;
-    float sphereAccelSuper = 330.0f;
-    float sphereAccelUp = 230.0f;
-    float sphereAccelUpSuper = 280.0f;
-    float sphereJump = 60.0f;
-    float sphereJumpSuper = 90.0f;
+    float sphereAccel = 28.0f;
+    float sphereAccelSuper = 33.0f;
+    float sphereAccelUp = 23.0f;
+    float sphereAccelUpSuper = 28.0f;
+    float sphereJump = 6.0f;
+    float sphereJumpSuper = 9.0f;
     float sphereFriction = 0.95f;
-    float sphereGravity = -200.0f;
-    float sphereRadius = 5.0f;
+    float sphereGravity = -20.0f;
+    float sphereRadius = 0.5f;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
     glm::vec3 spherePos{};
     glm::vec3 sphereCheckpoint{};
@@ -287,10 +287,10 @@ protected:
     std::string wallPathTexture = "textures/Wall.jpg";
 
     // View
-    float viewDistance = 20.0f + sphereRadius;
-    float viewDistanceSuper = 30.0f + sphereRadius;
-    float viewHeight = 20.0f + sphereRadius;
-    float viewHeightSuper = 30.0f + sphereRadius;
+    float viewDistance = 2.0f + sphereRadius;
+    float viewDistanceSuper = 3.0f + sphereRadius;
+    float viewHeight = 2.0f + sphereRadius;
+    float viewHeightSuper = 3.0f + sphereRadius;
     float viewAzimuth = 0.0f;
     float viewElevation = 0.0f;
     float viewSpeed = glm::radians(170.0f);
@@ -1018,21 +1018,6 @@ class Level1 : public Level {
 public:
     Level1() {
         levelPathPrefix = "levels/level1/";
-
-        sphereAccel = 28.0f;
-        sphereAccelSuper = 33.0f;
-        sphereAccelUp = 23.0f;
-        sphereAccelUpSuper = 28.0f;
-        sphereJump = 6.0f;
-        sphereJumpSuper = 9.0f;
-        sphereFriction = 0.95f;
-        sphereGravity = -20.0f;
-        sphereRadius = 0.5f;
-
-        viewDistance = 2.0f + sphereRadius;
-        viewDistanceSuper = 3.0f + sphereRadius;
-        viewHeight = 2.0f + sphereRadius;
-        viewHeightSuper = 3.0f + sphereRadius;
     }
 
 };
@@ -1048,7 +1033,7 @@ public:
 
 
 int main() {
-    Level1 app;
+    Level2 app;
 
     try {
         app.run();
