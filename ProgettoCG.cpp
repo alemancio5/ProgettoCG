@@ -142,10 +142,10 @@ class Level : public BaseProject {
 protected:
 
     // Level
-    static const int levelSize = 450;
+    static const int levelSize = 40;
     float levelHeight[levelSize][levelSize];
     float levelType[levelSize][levelSize];
-    const glm::vec3 levelStart = glm::vec3(50.0f, 0.0f, 50.0f);
+    const glm::vec3 levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
     std::string levelPathPrefix = "";
     std::string levelPathHeight = "jsons/Height.json";
     std::string levelPathType = "jsons/Type.json";
@@ -168,8 +168,8 @@ protected:
     float sphereJump = 60.0f;
     float sphereJumpSuper = 90.0f;
     float sphereFriction = 0.95f;
-    const float sphereGravity = -200.0f;
-    const float sphereRadius = 5.0f;
+    float sphereGravity = -200.0f;
+    float sphereRadius = 5.0f;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
     glm::vec3 spherePos{};
     glm::vec3 sphereCheckpoint{};
@@ -1018,6 +1018,21 @@ class Level1 : public Level {
 public:
     Level1() {
         levelPathPrefix = "levels/level1/";
+
+        sphereAccel = 28.0f;
+        sphereAccelSuper = 33.0f;
+        sphereAccelUp = 23.0f;
+        sphereAccelUpSuper = 28.0f;
+        sphereJump = 6.0f;
+        sphereJumpSuper = 9.0f;
+        sphereFriction = 0.95f;
+        sphereGravity = -20.0f;
+        sphereRadius = 0.5f;
+
+        viewDistance = 2.0f + sphereRadius;
+        viewDistanceSuper = 3.0f + sphereRadius;
+        viewHeight = 2.0f + sphereRadius;
+        viewHeightSuper = 3.0f + sphereRadius;
     }
 
 };

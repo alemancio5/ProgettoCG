@@ -4,95 +4,95 @@
       "description": "Ground",
       "i": {
         "start": 0,
-        "end": 400
+        "end": 40
       },
       "j": {
         "start": 0,
-        "end": 400
+        "end": 40
       },
       "type": 0.0
     },
     {
       "description": "Checkpoint #1",
       "i": {
-        "start": 290,
-        "end": 310
+        "start": 29,
+        "end": 31
       },
       "j": {
-        "start": 300,
-        "end": 320
+        "start": 30,
+        "end": 32
       },
       "type": 1.0
     },
     {
       "description": "Super Speed #1",
       "i": {
-        "start": 50,
-        "end": 70
+        "start": 5,
+        "end": 7
       },
       "j": {
-        "start": 140,
-        "end": 160
+        "start": 14,
+        "end": 16
       },
       "type": 2.0
     },
     {
       "description": "Super View #1",
       "i": {
-        "start": 50,
-        "end": 70
+        "start": 5,
+        "end": 7
       },
       "j": {
-        "start": 240,
-        "end": 260
+        "start": 24,
+        "end": 26
       },
       "type": 3.0
     },
     {
       "description": "Win #1",
       "i": {
-        "start": 45,
-        "end": 65
+        "start": 4,
+        "end": 6
       },
       "j": {
-        "start": 335,
-        "end": 355
+        "start": 33,
+        "end": 35
       },
       "type": 4.0
     },
     {
       "description": "Iron #1",
       "i": {
-        "start": 180,
-        "end": 220
+        "start": 18,
+        "end": 22
       },
       "j": {
-        "start": 50,
-        "end": 90
+        "start": 5,
+        "end": 9
       },
       "type": 5.0
     },
     {
       "description": "Iron #2",
       "i": {
-        "start": 220,
-        "end": 260
+        "start": 22,
+        "end": 26
       },
       "j": {
-        "start": 20,
-        "end": 60
+        "start": 2,
+        "end": 6
       },
       "type": 5.0
     },
     {
       "description": "Iron #3",
       "i": {
-        "start": 340,
-        "end": 380
+        "start": 34,
+        "end": 38
       },
       "j": {
-        "start": 190,
-        "end": 230
+        "start": 19,
+        "end": 23
       },
       "type": 5.0
     }
