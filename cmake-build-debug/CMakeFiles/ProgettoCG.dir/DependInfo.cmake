@@ -8,15 +8,11 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/ProgettoCG.cpp" "CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o" "gcc" "CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o.d"
+  "C:/Users/TommasoPasini/Desktop/Ciao/ProgettoCG/ProgettoCG.cpp" "CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.obj" "gcc" "CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.obj.d"
   )
 
 # Targets to which this target links which contain Fortran sources.
 set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
-  )
-
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
   )
 
 # Fortran module output directory.

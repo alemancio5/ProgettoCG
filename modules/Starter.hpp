@@ -43,6 +43,9 @@
 #define SINFL_IMPLEMENTATION
 #include <sinfl.h>
 
+// TODO UI rendered
+// #include <imgui.h> // Se utilizzi ImGui per la UI
+
 // For compile compatibility issues
 #define M_E			2.7182818284590452354	/* e */
 #define M_LOG2E		1.4426950408889634074	/* log_2 e */
@@ -1642,8 +1645,47 @@ std::cout << "Starting createInstance()\n"  << std::flush;
 							VK_TRUE, UINT64_MAX);
 		}
 		imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+
+        /*/ TODO Inizio Modifica
+        const char *currentState = "MAIN_MENU";
+        if (currentState == "MAIN_MENU") {
+            ImGui_ImplVulkan_NewFrame();\
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            // Schermata del titolo
+            ImGui::SetNextWindowPos(ImVec2(100, 50));
+            ImGui::SetNextWindowSize(ImVec2(600, 100));
+            ImGui::Begin("Titolo", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+            ImGui::Text("Il mio Gioco Vulkan");
+            ImGui::End();
+
+            // Pulsanti
+            ImGui::SetNextWindowPos(ImVec2(300, 200));
+            ImGui::SetNextWindowSize(ImVec2(200, 150));
+            ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+
+            if (ImGui::Button("Gioca", ImVec2(200, 50))) {
+                currentState = "GAMEPLAY";  // Cambia lo stato del gioco
+            }
+            if (ImGui::Button("Impostazioni", ImVec2(200, 50))) {
+                currentState = "SETTINGS";
+            }
+            if (ImGui::Button("Esci", ImVec2(200, 50))) {
+                glfwSetWindowShouldClose(window, GLFW_TRUE);
+            }
+
+            ImGui::End();
+
+            // Renderizza la UI
+            ImGui::Render();
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[imageIndex]);
+        } else if (currentState == "GAMEPLAY") {
+            updateUniformBuffer(imageIndex);
+        }
+        // Fine modifiche
 		
-		updateUniformBuffer(imageIndex);
+		*/ updateUniformBuffer(imageIndex);
 		
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

@@ -24,75 +24,63 @@ std::vector<SingleText> textFinish = {
 };
 
 // UBO structs
+// Sphere
 struct SphereMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
+// Plane
 struct PlaneMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-struct PlanePUBO {
-    alignas(4) glm::vec3 ambientColor;
-    alignas(4) glm::vec3 lightPos;
-    alignas(4) glm::vec3 lightColor;
-};
+// Item
 struct ItemMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
-};
-struct ItemPUBO {
-    alignas(4) glm::vec3 ambientColor;
-    alignas(4) glm::vec3 lightPos;
-    alignas(4) glm::vec3 lightColor;
 };
 struct StepMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-struct StepPUBO {
-    alignas(4) glm::vec3 ambientColor;
-    alignas(4) glm::vec3 lightPos;
-    alignas(4) glm::vec3 lightColor;
-};
 struct IronMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
-};
-struct IronPUBO {
-    alignas(4) glm::vec3 ambientColor;
-    alignas(4) glm::vec3 lightPos;
-    alignas(4) glm::vec3 lightColor;
 };
 struct DecorationMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-struct DecorationPUBO {
-    alignas(4) glm::vec3 ambientColor;
-    alignas(4) glm::vec3 lightPos;
-    alignas(4) glm::vec3 lightColor;
-};
+// Border
 struct BorderMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
+// Wall
 struct WallMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-struct WallPUBO {
-    alignas(4) glm::vec3 ambientColor;
-    alignas(4) glm::vec3 lightPos;
-    alignas(4) glm::vec3 lightColor;
+// Shader param
+struct ShaderLightPUBO {
+    alignas(16) glm::vec3 viewPos;
+    alignas(16) glm::vec3 lightPos;
+    alignas(16) glm::vec4 lightColor;
+    alignas(16) glm::vec4 lightStatus;
+
+    alignas(4) float ambientStrength;
+    alignas(4) float specularStrength;
+    alignas(4) float shininess;
+    alignas(4) float cosIn;
+    alignas(4) float cosOut;
 };
 
 // Vertexes structs
@@ -150,6 +138,20 @@ protected:
     std::string levelPathHeight = "jsons/Height.json";
     std::string levelPathType = "jsons/Type.json";
 
+    // Shader parameters
+    ShaderLightPUBO UBOp_ShaderLights;
+    glm::vec4 lightStatus = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
+    glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
+    float LInt = 0.5f;
+    float ambientStrength = 10.0f;
+    float specularStrength = 0.1f;
+    float shininess = 10.0f;
+    float cosIn = glm::cos(0.4f);
+    float cosOut = glm::cos(0.5f);
+    std::string lightPathVert = "shaders/LightVert.spv";
+    std::string lightPathFrag = "shaders/LightFrag.spv";
+
     // Sphere
     DescriptorSetLayout DSL_Sphere;
     VertexDescriptor VD_Sphere;
@@ -192,16 +194,8 @@ protected:
     Texture T_Plane{};
     DescriptorSet DS_Plane;
     PlaneMUBO UBOm_Plane{};
-    PlanePUBO UBOp_Plane{};
-    std::string planePathVert = "shaders/PlaneVert.spv";
-    std::string planePathFrag = "shaders/PlaneFrag.spv";
     std::string planePathModel = "models/Plane.obj";
     std::string planePathTexture = "textures/Plane.jpg";
-
-
-    float LInt = 50.0f;
-    glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
-    glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
 
     // Item
     DescriptorSetLayout DSL_Item;
@@ -211,9 +205,6 @@ protected:
     Texture T_Item{};
     DescriptorSet DS_Item;
     ItemMUBO UBOm_Item{};
-    ItemPUBO UBOp_Item{};
-    std::string itemPathVert = "shaders/ItemVert.spv";
-    std::string itemPathFrag = "shaders/ItemFrag.spv";
     std::string itemPathModel = "models/Item.obj";
     std::string itemPathTexture = "textures/Item.jpg";
 
@@ -225,9 +216,6 @@ protected:
     Texture T_Step{};
     DescriptorSet DS_Step;
     StepMUBO UBOm_Step{};
-    StepPUBO UBOp_Step{};
-    std::string stepPathVert = "shaders/StepVert.spv";
-    std::string stepPathFrag = "shaders/StepFrag.spv";
     std::string stepPathModel = "models/Step.obj";
     std::string stepPathTexture = "textures/Step.jpg";
 
@@ -239,9 +227,6 @@ protected:
     Texture T_Iron{};
     DescriptorSet DS_Iron;
     IronMUBO UBOm_Iron{};
-    IronPUBO UBOp_Iron{};
-    std::string ironPathVert = "shaders/IronVert.spv";
-    std::string ironPathFrag = "shaders/IronFrag.spv";
     std::string ironPathModel = "models/Iron.obj";
     std::string ironPathTexture = "textures/Iron.jpg";
 
@@ -253,9 +238,6 @@ protected:
     Texture T_Decoration{};
     DescriptorSet DS_Decoration;
     DecorationMUBO UBOm_Decoration{};
-    DecorationPUBO UBOp_Decoration{};
-    std::string decorationPathVert = "shaders/DecorationVert.spv";
-    std::string decorationPathFrag = "shaders/DecorationFrag.spv";
     std::string decorationPathModel = "models/Decoration.obj";
     std::string decorationPathTexture = "textures/Decoration.jpg";
 
@@ -267,8 +249,6 @@ protected:
     Texture T_Border;
     DescriptorSet DS_Border;
     BorderMUBO UBOm_Border;
-    std::string borderPathVert = "shaders/BorderVert.spv";
-    std::string borderPathFrag = "shaders/BorderFrag.spv";
     std::string borderPathModel = "models/Border.obj";
     std::string borderPathTexture = "textures/Border.jpg";
 
@@ -280,9 +260,6 @@ protected:
     Texture T_Wall{};
     DescriptorSet DS_Wall;
     WallMUBO UBOm_Wall{};
-    WallPUBO UBOp_Wall{};
-    std::string wallPathVert = "shaders/WallVert.spv";
-    std::string wallPathFrag = "shaders/WallFrag.spv";
     std::string wallPathModel = "models/Wall.obj";
     std::string wallPathTexture = "textures/Wall.jpg";
 
@@ -331,7 +308,6 @@ protected:
         // Level
         levelInit();
 
-
         // Sphere
         DSL_Sphere.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMUBO), 1},
@@ -351,12 +327,11 @@ protected:
         spherePosOld = spherePos;
         sphereCheckpoint = spherePos;
 
-
         // Plane
         DSL_Plane.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PlanePUBO), 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
         });
         VD_Plane.init(this, {
             {0, sizeof(PlaneVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -365,7 +340,7 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(PlaneVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Plane.init(this, &VD_Plane, planePathFrag, planePathVert, {&DSL_Plane});
+        P_Plane.init(this, &VD_Plane, lightPathVert, lightPathFrag, {&DSL_Plane});
         M_Plane.init(this, &VD_Plane, levelPathPrefix + planePathModel, OBJ);
         T_Plane.init(this, levelPathPrefix + planePathTexture);
 
@@ -374,7 +349,7 @@ protected:
         DSL_Item.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ItemPUBO), 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
         });
         VD_Item.init(this, {
             {0, sizeof(ItemVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -383,7 +358,7 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
         });
-        P_Item.init(this, &VD_Item, itemPathFrag, itemPathVert, {&DSL_Item});
+        P_Item.init(this, &VD_Item, lightPathVert, lightPathFrag, {&DSL_Item});
         M_Item.init(this, &VD_Item, levelPathPrefix + itemPathModel, OBJ);
         T_Item.init(this, levelPathPrefix + itemPathTexture);
 
@@ -392,7 +367,7 @@ protected:
         DSL_Step.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(StepMUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(StepPUBO), 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
         });
         VD_Step.init(this, {
             {0, sizeof(StepVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -401,7 +376,7 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(StepVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, norm), sizeof(glm::vec3), NORMAL},
         });
-        P_Step.init(this, &VD_Step, stepPathFrag, stepPathVert, {&DSL_Step});
+        P_Step.init(this, &VD_Step, lightPathVert, lightPathFrag, {&DSL_Step});
         M_Step.init(this, &VD_Step, levelPathPrefix + stepPathModel, OBJ);
         T_Step.init(this, levelPathPrefix + stepPathTexture);
 
@@ -410,7 +385,7 @@ protected:
         DSL_Iron.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(IronMUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IronPUBO), 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
         });
         VD_Iron.init(this, {
             {0, sizeof(IronVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -419,7 +394,7 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(IronVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, norm), sizeof(glm::vec3), NORMAL},
         });
-        P_Iron.init(this, &VD_Iron, ironPathFrag, ironPathVert, {&DSL_Iron});
+        P_Iron.init(this, &VD_Iron, lightPathVert, lightPathFrag, {&DSL_Iron});
         M_Iron.init(this, &VD_Iron, levelPathPrefix + ironPathModel, OBJ);
         T_Iron.init(this, levelPathPrefix + ironPathTexture);
 
@@ -428,7 +403,7 @@ protected:
         DSL_Decoration.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(DecorationMUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DecorationPUBO), 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
         });
         VD_Decoration.init(this, {
             {0, sizeof(DecorationVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -437,16 +412,15 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(DecorationVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, norm), sizeof(glm::vec3), NORMAL},
         });
-        P_Decoration.init(this, &VD_Decoration, decorationPathFrag, decorationPathVert, {&DSL_Decoration});
+        P_Decoration.init(this, &VD_Decoration, lightPathVert, lightPathFrag, {&DSL_Decoration});
         M_Decoration.init(this, &VD_Decoration, levelPathPrefix + decorationPathModel, OBJ);
         T_Decoration.init(this, levelPathPrefix + decorationPathTexture);
-
 
         // Border
         DSL_Border.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
         });
         VD_Border.init(this, {
                 {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -455,16 +429,15 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderVertex, uv),      sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Border.init(this, &VD_Border, borderPathFrag, borderPathVert, {&DSL_Border});
+        P_Border.init(this, &VD_Border, lightPathVert, lightPathFrag, {&DSL_Border});
         M_Border.init(this, &VD_Border, levelPathPrefix + borderPathModel, OBJ);
         T_Border.init(this, levelPathPrefix + borderPathTexture);
-
 
         // Wall
         DSL_Wall.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,        1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(WallPUBO), 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
         });
         VD_Wall.init(this, {
             {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -473,16 +446,14 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Wall.init(this, &VD_Wall, wallPathFrag, wallPathVert, {&DSL_Wall});
+        P_Wall.init(this, &VD_Wall, lightPathVert, lightPathFrag, {&DSL_Wall});
         M_Wall.init(this, &VD_Wall, levelPathPrefix + wallPathModel, OBJ);
         T_Wall.init(this, levelPathPrefix + wallPathTexture);
-
 
         // Text
         textLivesBanner.init(this, &textLives);
         textMessageBanner.init(this, &textMessage);
         textFinishBanner.init(this, &textFinish);
-
 
         // Others
         DPSZs.uniformBlocksInPool = 15;
@@ -727,12 +698,52 @@ protected:
     }
 
     void updateUniformBuffer(uint32_t currentImage) override {
+        static bool debounce = false;
+        static int curDebounce = 0;
+
         // Get inputs
         float deltaTime;
         auto movementInput = glm::vec3(0.0f);
         auto rotationInput = glm::vec3(0.0f);
         bool fireInput = false;
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
+
+        if(glfwGetKey(window, GLFW_KEY_1)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_1;
+                lightStatus.x = 1 - lightStatus.x;
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_1) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+        if(glfwGetKey(window, GLFW_KEY_2)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_2;
+                lightStatus.y = 1 - lightStatus.y;
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_2) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+        if(glfwGetKey(window, GLFW_KEY_3)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_3;
+                lightStatus.z = 1 - lightStatus.z;
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_3) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
 
         // Use inputs
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) { // Game exit
@@ -945,32 +956,17 @@ protected:
         UBOm_Plane.nMat = glm::mat4(1.0f);
         DS_Plane.map(currentImage, &UBOm_Plane, 0);
 
-        UBOp_Plane.lightColor = glm::vec4(LCol, LInt);
-        UBOp_Plane.lightPos = spherePos;
-        UBOp_Plane.ambientColor = LAmb;
-        DS_Plane.map(currentImage, &UBOp_Plane, 2);
-
         // Item
         UBOm_Item.mMat = glm::mat4(1.0f);
         UBOm_Item.nMat = glm::mat4(1.0f);
         UBOm_Item.mvpMat = projectionViewMatrix * UBOm_Item.mMat;
         DS_Item.map(currentImage, &UBOm_Item, 0);
 
-        UBOp_Item.lightColor = glm::vec4(LCol, LInt);
-        UBOp_Item.lightPos = spherePos;
-        UBOp_Item.ambientColor = LAmb;
-        DS_Item.map(currentImage, &UBOp_Item, 2);
-
         // Step
         UBOm_Step.mMat = glm::mat4(1.0f);
         UBOm_Step.nMat = glm::mat4(1.0f);
         UBOm_Step.mvpMat = projectionViewMatrix * UBOm_Step.mMat;
         DS_Step.map(currentImage, &UBOm_Step, 0);
-
-        UBOp_Step.lightColor = glm::vec4(LCol, LInt);
-        UBOp_Step.lightPos = spherePos;
-        UBOp_Step.ambientColor = LAmb;
-        DS_Step.map(currentImage, &UBOp_Step, 2);
         
         // Iron
         UBOm_Iron.mMat = glm::mat4(1.0f);
@@ -978,21 +974,11 @@ protected:
         UBOm_Iron.mvpMat = projectionViewMatrix * UBOm_Iron.mMat;
         DS_Iron.map(currentImage, &UBOm_Iron, 0);
 
-        UBOp_Iron.lightColor = glm::vec4(LCol, LInt);
-        UBOp_Iron.lightPos = spherePos;
-        UBOp_Iron.ambientColor = LAmb;
-        DS_Iron.map(currentImage, &UBOp_Iron, 2);
-
         // Decoration
         UBOm_Decoration.mMat = glm::mat4(1.0f);
         UBOm_Decoration.nMat = glm::mat4(1.0f);
         UBOm_Decoration.mvpMat = projectionViewMatrix * UBOm_Decoration.mMat;
         DS_Decoration.map(currentImage, &UBOm_Decoration, 0);
-
-        UBOp_Decoration.lightColor = glm::vec4(LCol, LInt);
-        UBOp_Decoration.lightPos = spherePos;
-        UBOp_Decoration.ambientColor = LAmb;
-        DS_Decoration.map(currentImage, &UBOp_Decoration, 2);
         
         // Border
         UBOm_Border.mMat = glm::mat4(1.0f);
@@ -1006,11 +992,24 @@ protected:
         UBOm_Wall.mvpMat = projectionViewMatrix * UBOm_Wall.mMat;
         DS_Wall.map(currentImage, &UBOm_Wall, 0);
 
-        UBOp_Wall.lightColor = glm::vec4(LCol, LInt);
-        UBOp_Wall.lightPos = spherePos;
-        UBOp_Wall.ambientColor = LAmb;
-        DS_Border.map(currentImage, &UBOp_Wall, 2);
-        DS_Wall.map(currentImage, &UBOp_Wall, 2);
+        // Shader Lights
+        UBOp_ShaderLights.lightColor = glm::vec4(LCol, LInt);
+        UBOp_ShaderLights.lightPos =  spherePos;
+        UBOp_ShaderLights.viewPos = viewPos;
+        UBOp_ShaderLights.ambientStrength = ambientStrength;
+        UBOp_ShaderLights.specularStrength = specularStrength;
+        UBOp_ShaderLights.shininess = shininess;
+        UBOp_ShaderLights.lightStatus = lightStatus;
+        UBOp_ShaderLights.cosIn = cosIn;
+        UBOp_ShaderLights.cosOut = cosOut;
+
+        DS_Plane.map(currentImage, &UBOp_ShaderLights, 2);
+        DS_Border.map(currentImage, &UBOp_ShaderLights, 2);
+        DS_Wall.map(currentImage, &UBOp_ShaderLights, 2);
+        DS_Item.map(currentImage, &UBOp_ShaderLights, 2);
+        DS_Step.map(currentImage, &UBOp_ShaderLights, 2);
+        DS_Iron.map(currentImage, &UBOp_ShaderLights, 2);
+        DS_Decoration.map(currentImage, &UBOp_ShaderLights, 2);
     }
 };
 
@@ -1029,7 +1028,6 @@ public:
     }
 
 };
-
 
 
 int main() {
