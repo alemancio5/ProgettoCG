@@ -1,6 +1,9 @@
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
 
+std::string scene = "Level1";
+bool closeapp = false;
+
 // Texts of the game
 std::vector<SingleText> textLives = {
     {1, {"LIVES: 0", "", "",""}, 0, 0},
@@ -24,19 +27,16 @@ std::vector<SingleText> textFinish = {
 };
 
 // UBO structs
-// Sphere
 struct SphereMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-// Plane
 struct PlaneMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-// Item
 struct ItemMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
@@ -57,25 +57,21 @@ struct DecorationMUBO {
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-// Border
 struct BorderMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-// Wall
 struct WallMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-// Shader param
 struct ShaderLightPUBO {
     alignas(16) glm::vec3 viewPos;
     alignas(16) glm::vec3 lightPos;
     alignas(16) glm::vec4 lightColor;
     alignas(16) glm::vec4 lightStatus;
-
     alignas(4) float ambientStrength;
     alignas(4) float specularStrength;
     alignas(4) float shininess;
@@ -140,7 +136,7 @@ protected:
 
     // Shader parameters
     ShaderLightPUBO UBOp_ShaderLights;
-    glm::vec4 lightStatus = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    glm::vec4 lightStatus = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
     glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
     glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
     float LInt = 0.5f;
@@ -149,8 +145,8 @@ protected:
     float shininess = 10.0f;
     float cosIn = glm::cos(0.4f);
     float cosOut = glm::cos(0.5f);
-    std::string lightPathVert = "shaders/LightVert.spv";
-    std::string lightPathFrag = "shaders/LightFrag.spv";
+    std::string lightPathVert = "shaders/NormalVert.spv";
+    std::string lightPathFrag = "shaders/NormalFrag.spv";
 
     // Sphere
     DescriptorSetLayout DSL_Sphere;
@@ -194,6 +190,8 @@ protected:
     Texture T_Plane{};
     DescriptorSet DS_Plane;
     PlaneMUBO UBOm_Plane{};
+    std::string planePathVert = "shaders/PlaneVert.spv";
+    std::string planePathFrag = "shaders/PlaneFrag.spv";
     std::string planePathModel = "models/Plane.obj";
     std::string planePathTexture = "textures/Plane.jpg";
 
@@ -205,6 +203,8 @@ protected:
     Texture T_Item{};
     DescriptorSet DS_Item;
     ItemMUBO UBOm_Item{};
+    std::string itemPathVert = "shaders/ItemVert.spv";
+    std::string itemPathFrag = "shaders/ItemFrag.spv";
     std::string itemPathModel = "models/Item.obj";
     std::string itemPathTexture = "textures/Item.jpg";
 
@@ -216,6 +216,8 @@ protected:
     Texture T_Step{};
     DescriptorSet DS_Step;
     StepMUBO UBOm_Step{};
+    std::string stepPathVert = "shaders/StepVert.spv";
+    std::string stepPathFrag = "shaders/StepFrag.spv";
     std::string stepPathModel = "models/Step.obj";
     std::string stepPathTexture = "textures/Step.jpg";
 
@@ -227,6 +229,8 @@ protected:
     Texture T_Iron{};
     DescriptorSet DS_Iron;
     IronMUBO UBOm_Iron{};
+    std::string ironPathVert = "shaders/IronVert.spv";
+    std::string ironPathFrag = "shaders/IronFrag.spv";
     std::string ironPathModel = "models/Iron.obj";
     std::string ironPathTexture = "textures/Iron.jpg";
 
@@ -238,6 +242,8 @@ protected:
     Texture T_Decoration{};
     DescriptorSet DS_Decoration;
     DecorationMUBO UBOm_Decoration{};
+    std::string decorationPathVert = "shaders/DecorationVert.spv";
+    std::string decorationPathFrag = "shaders/DecorationFrag.spv";
     std::string decorationPathModel = "models/Decoration.obj";
     std::string decorationPathTexture = "textures/Decoration.jpg";
 
@@ -249,6 +255,8 @@ protected:
     Texture T_Border;
     DescriptorSet DS_Border;
     BorderMUBO UBOm_Border;
+    std::string borderPathVert = "shaders/BorderVert.spv";
+    std::string borderPathFrag = "shaders/BorderFrag.spv";
     std::string borderPathModel = "models/Border.obj";
     std::string borderPathTexture = "textures/Border.jpg";
 
@@ -260,6 +268,8 @@ protected:
     Texture T_Wall{};
     DescriptorSet DS_Wall;
     WallMUBO UBOm_Wall{};
+    std::string wallPathVert = "shaders/WallVert.spv";
+    std::string wallPathFrag = "shaders/WallFrag.spv";
     std::string wallPathModel = "models/Wall.obj";
     std::string wallPathTexture = "textures/Wall.jpg";
 
@@ -308,6 +318,7 @@ protected:
         // Level
         levelInit();
 
+
         // Sphere
         DSL_Sphere.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMUBO), 1},
@@ -326,6 +337,7 @@ protected:
         spherePos = levelStart + glm::vec3(0.0f, sphereRadius, 0.0f);
         spherePosOld = spherePos;
         sphereCheckpoint = spherePos;
+
 
         // Plane
         DSL_Plane.init(this, {
@@ -416,6 +428,7 @@ protected:
         M_Decoration.init(this, &VD_Decoration, levelPathPrefix + decorationPathModel, OBJ);
         T_Decoration.init(this, levelPathPrefix + decorationPathTexture);
 
+
         // Border
         DSL_Border.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
@@ -432,6 +445,7 @@ protected:
         P_Border.init(this, &VD_Border, lightPathVert, lightPathFrag, {&DSL_Border});
         M_Border.init(this, &VD_Border, levelPathPrefix + borderPathModel, OBJ);
         T_Border.init(this, levelPathPrefix + borderPathTexture);
+
 
         // Wall
         DSL_Wall.init(this, {
@@ -450,10 +464,12 @@ protected:
         M_Wall.init(this, &VD_Wall, levelPathPrefix + wallPathModel, OBJ);
         T_Wall.init(this, levelPathPrefix + wallPathTexture);
 
+
         // Text
         textLivesBanner.init(this, &textLives);
         textMessageBanner.init(this, &textMessage);
         textFinishBanner.init(this, &textFinish);
+
 
         // Others
         DPSZs.uniformBlocksInPool = 15;
@@ -701,6 +717,7 @@ protected:
         static bool debounce = false;
         static int curDebounce = 0;
 
+
         // Get inputs
         float deltaTime;
         auto movementInput = glm::vec3(0.0f);
@@ -748,6 +765,8 @@ protected:
         // Use inputs
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) { // Game exit
             glfwSetWindowShouldClose(window, GL_TRUE);
+            scene = "Menu";
+            closeapp = false;
         }
         if (movementInput.x == -1.0f || rotationInput.y == -1.0f) { // View left
             if (!viewPosLock.x)
@@ -1018,7 +1037,6 @@ public:
     Level1() {
         levelPathPrefix = "levels/level1/";
     }
-
 };
 
 class Level2 : public Level {
@@ -1026,15 +1044,25 @@ public:
     Level2() {
         levelPathPrefix = "levels/level2/";
     }
-
 };
 
 
+
 int main() {
-    Level2 app;
+    Level1 app1;
+    Level2 app2;
+
+
 
     try {
-        app.run();
+        while (!closeapp) {
+            if (scene == "Menu") {
+                app2.run();
+            }
+            else if (scene == "Level1") {
+                app1.run();
+            }
+        }
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
