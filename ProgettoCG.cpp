@@ -147,7 +147,7 @@ protected:
     static const int levelSize = 100;
     float levelHeight[levelSize][levelSize];
     float levelType[levelSize][levelSize];
-    glm::vec3 levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
+    glm::vec3 levelStart;
     std::string levelName;
     std::string levelPathPrefix = "";
     std::string levelPathHeight = "jsons/Height.json";
@@ -174,9 +174,9 @@ protected:
     float sphereGravity = -20.0f;
     float sphereRadius = 0.5f;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
-    glm::vec3 spherePos = levelStart + glm::vec3(0.0f, sphereRadius, 0.0f);
-    glm::vec3 sphereCheckpoint = spherePos;
-    glm::vec3 spherePosOld = spherePos;
+    glm::vec3 spherePos{};
+    glm::vec3 sphereCheckpoint{};
+    glm::vec3 spherePosOld{};
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::quat sphereRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -285,8 +285,8 @@ protected:
     float viewDistanceSuper = 3.0f + sphereRadius;
     float viewHeight = 2.0f + sphereRadius;
     float viewHeightSuper = 3.0f + sphereRadius;
-    float viewAzimuth = 0.0f;
-    float viewElevation = 0.0f;
+    float viewAzimuth = 300.0f;
+    float viewElevation = -glm::radians(60.0f);
     float viewSpeed = glm::radians(170.0f);
     const float viewElevationMax = glm::radians(90.0f);
     const float viewElevationMin = -glm::radians(90.0f);
@@ -352,6 +352,9 @@ protected:
         P_Sphere.init(this, &VD_Sphere,  spherePathVert, spherePathFrag, {&DSL_Sphere});
         M_Sphere.init(this, &VD_Sphere, levelPathPrefix + spherePathModel, OBJ);
         T_Sphere.init(this, levelPathPrefix + spherePathTexture);
+        spherePos = levelStart + glm::vec3(0.0f, sphereRadius, 0.0f);
+        sphereCheckpoint = spherePos;
+        spherePosOld = spherePos;
 
         // Plane
         DSL_Plane.init(this, {
@@ -1122,9 +1125,9 @@ protected:
 class Menu : public Level {
 public:
     Menu() {
+        levelStart = glm::vec3(6.0f, 0.0f, 10.0f);
         levelPathPrefix = "levels/menu/";
         levelName = "Labyball - Menu";
-        levelStart = glm::vec3(10.0f, 0.0f, 10.0f);
     }
 };
 
@@ -1133,6 +1136,7 @@ public:
 class Level1 : public Level {
 public:
     Level1() {
+        levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
         levelPathPrefix = "levels/level1/";
         levelName = "Labyball - Level 1";
 
@@ -1144,6 +1148,7 @@ public:
 class Level2 : public Level {
 public:
     Level2() {
+        levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
         levelPathPrefix = "levels/level2/";
         levelName = "Labyball - Level 2";
     }
