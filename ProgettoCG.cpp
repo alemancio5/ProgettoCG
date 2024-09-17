@@ -148,6 +148,7 @@ protected:
     float levelHeight[levelSize][levelSize];
     float levelType[levelSize][levelSize];
     glm::vec3 levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
+    std::string levelName;
     std::string levelPathPrefix = "";
     std::string levelPathHeight = "jsons/Height.json";
     std::string levelPathType = "jsons/Type.json";
@@ -316,7 +317,7 @@ protected:
     void setWindowParameters() override {
         windowWidth = 800;
         windowHeight = 600;
-        windowTitle = "Labyball";
+        windowTitle = levelName;
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.0f, 0.0f, 0.0f, 1.0f};
         Ar = (float)windowWidth / (float)windowHeight;
@@ -732,7 +733,7 @@ protected:
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
         getInputs(deltaTime, movementInput, rotationInput, fireInput);
 
-        // Update things
+        // View update
         updateView();
 
         // Sphere update
@@ -917,49 +918,6 @@ protected:
 
 
     void updateSphere(float deltaTime) {
-        // Type check
-        itemOld = itemCur;
-        if (levelType[(int)spherePos.x][(int)spherePos.z] == 1.0 && sphereOnGround()) {
-            itemCur = 1;
-            textMessageIndex = 1;
-        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 2.0 && sphereOnGround()) {
-            itemCur = 2;
-            textMessageIndex = 2;
-        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 3.0 && sphereOnGround()) {
-            itemCur = 3;
-            textMessageIndex = 3;
-        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 4.0 && sphereOnGround()) {
-            itemCur = 4;
-            textMessageIndex = 4;
-        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 6.0 && sphereOnGround()) {
-            itemCur = 6;
-            textMessageIndex = 5;
-        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 11.0 && sphereOnGround()) {
-            itemCur = 11;
-            textMessageIndex = 6;
-        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 12.0 && sphereOnGround()) {
-            itemCur = 12;
-            textMessageIndex = 7;
-        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0 && sphereOnGround()) {
-            itemCur = 5;
-            spherePos = sphereCheckpoint;
-            sphereLives--;
-            if (sphereLives == 0) {
-                textFinishIndex = 2;
-                sphereAccel = 0.0f;
-                sphereJump = 0.0f;
-                viewSpeed = 0.0f;
-            }
-        } else {
-            itemCur = 0;
-            textMessageIndex = 0;
-            textFinishIndex = 0;
-        }
-
-        if (itemCur != itemOld) {
-            RebuildPipeline();
-        }
-
         // Update position in y
         if (sphereGoingUp) {
             spherePosSpeed.y = sphereJump;
@@ -990,40 +948,82 @@ protected:
         spherePosSpeed.x *= sphereFriction;
         spherePosSpeed.z *= sphereFriction;
 
-        // Collision detection
-        if (levelHeight[(int)(spherePos.x + sphereRadius)][(int)(spherePosOld.z)] > spherePos.y) {
-            if (spherePosSpeed.x >= 0.0f)
-                spherePos.x = spherePosOld.x;
-        }
-        else if (levelHeight[(int)(spherePos.x - sphereRadius)][(int)(spherePosOld.z)] > spherePos.y) {
-            if (spherePosSpeed.x <= 0.0f)
-                spherePos.x = spherePosOld.x;
-        }
-        if (levelHeight[(int)(spherePos.x)][(int)(spherePosOld.z + sphereRadius)] > spherePos.y) {
-            if (spherePosSpeed.z >= 0.0f)
-                spherePos.z = spherePosOld.z;
-        }
-        else if (levelHeight[(int)(spherePos.x)][(int)(spherePosOld.z - sphereRadius)] > spherePos.y) {
-            if (spherePosSpeed.z <= 0.0f)
-                spherePos.z = spherePosOld.z;
-        }
-
-        // Update rotation
-        float sphereSpeed = glm::length(spherePosSpeed);
-        if (sphereSpeed > 0.0001f) {
+        // These are updated only if the sphere is moving
+        if (sphereIsMoving()) {
+            // Update rotation
+            float sphereSpeed = glm::length(spherePosSpeed);
             float rotationAngle = sphereSpeed * deltaTime / sphereRadius;
             glm::vec3 movementDir = glm::normalize(spherePosSpeed);
             glm::vec3 rotationAxis = glm::cross(movementDir, glm::vec3(0.0f, 1.0f, 0.0f));
             glm::quat rotationIncrement = glm::angleAxis(rotationAngle, -rotationAxis);
             sphereRot = glm::normalize(rotationIncrement * sphereRot);
-        }
 
-        // Update matrix
-        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::mat4_cast(sphereRot);
+            // Collision detection
+            if (levelHeight[(int) (spherePos.x + sphereRadius)][(int) (spherePosOld.z)] > spherePos.y) {
+                if (spherePosSpeed.x >= 0.0f)
+                    spherePos.x = spherePosOld.x;
+            } else if (levelHeight[(int) (spherePos.x - sphereRadius)][(int) (spherePosOld.z)] > spherePos.y) {
+                if (spherePosSpeed.x <= 0.0f)
+                    spherePos.x = spherePosOld.x;
+            }
+            if (levelHeight[(int) (spherePos.x)][(int) (spherePosOld.z + sphereRadius)] > spherePos.y) {
+                if (spherePosSpeed.z >= 0.0f)
+                    spherePos.z = spherePosOld.z;
+            } else if (levelHeight[(int) (spherePos.x)][(int) (spherePosOld.z - sphereRadius)] > spherePos.y) {
+                if (spherePosSpeed.z <= 0.0f)
+                    spherePos.z = spherePosOld.z;
+            }
+
+            // Check the type of the item under the sphere
+            itemOld = itemCur;
+            if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0 && sphereOnGround()) {
+                itemCur = 1;
+                textMessageIndex = 1;
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0 && sphereOnGround()) {
+                itemCur = 2;
+                textMessageIndex = 2;
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0 && sphereOnGround()) {
+                itemCur = 3;
+                textMessageIndex = 3;
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0 && sphereOnGround()) {
+                itemCur = 4;
+                textMessageIndex = 4;
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 6.0 && sphereOnGround()) {
+                itemCur = 6;
+                textMessageIndex = 5;
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 11.0 && sphereOnGround()) {
+                itemCur = 11;
+                textMessageIndex = 6;
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 12.0 && sphereOnGround()) {
+                itemCur = 12;
+                textMessageIndex = 7;
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 5.0 && sphereOnGround()) {
+                itemCur = 5;
+                spherePos = sphereCheckpoint;
+                sphereLives--;
+                if (sphereLives == 0) {
+                    textFinishIndex = 2;
+                    sphereAccel = 0.0f;
+                    sphereJump = 0.0f;
+                    viewSpeed = 0.0f;
+                }
+            } else {
+                itemCur = 0;
+                textMessageIndex = 0;
+                textFinishIndex = 0;
+            }
+            if (itemCur != itemOld) {
+                RebuildPipeline();
+            }
+
+            // Update matrix
+            sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::mat4_cast(sphereRot);
+        }
     }
 
     void updateUBO(uint32_t currentImage) {
         // Sphere
+        sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::mat4_cast(sphereRot);
         UBOm_Sphere.mvpMat = projectionViewMatrix * sphereMatrix;
         UBOm_Sphere.mMat = sphereMatrix;
         UBOm_Sphere.nMat = glm::mat4(1.0f);
@@ -1099,6 +1099,15 @@ protected:
     }
 
 
+    bool sphereIsMoving() {
+        float sphereSpeed = glm::length(spherePosSpeed);
+        if (sphereSpeed > 0.0001f)
+            return true;
+        else
+            return false;
+    }
+
+
     void appManage() {
         if (appCurrent == MENU) {
             appClosing = true;
@@ -1114,6 +1123,7 @@ class Menu : public Level {
 public:
     Menu() {
         levelPathPrefix = "levels/menu/";
+        levelName = "Labyball - Menu";
         levelStart = glm::vec3(10.0f, 0.0f, 10.0f);
     }
 };
@@ -1124,6 +1134,8 @@ class Level1 : public Level {
 public:
     Level1() {
         levelPathPrefix = "levels/level1/";
+        levelName = "Labyball - Level 1";
+
     }
 };
 
@@ -1133,6 +1145,7 @@ class Level2 : public Level {
 public:
     Level2() {
         levelPathPrefix = "levels/level2/";
+        levelName = "Labyball - Level 2";
     }
 };
 
