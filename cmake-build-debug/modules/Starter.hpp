@@ -43,6 +43,8 @@
 #define SINFL_IMPLEMENTATION
 #include <sinfl.h>
 
+
+
 // For compile compatibility issues
 #define M_E			2.7182818284590452354	/* e */
 #define M_LOG2E		1.4426950408889634074	/* log_2 e */
@@ -1611,13 +1613,17 @@ std::cout << "Starting createInstance()\n"  << std::flush;
 			}
 		}
 	}
-	
+
+    #include "Menu.hpp" // Include del menu
+
     void mainLoop() {
         while (!glfwWindowShouldClose(window)){
             glfwPollEvents();
             drawFrame();
         }
-        
+
+        checkCurrentScene();
+
         vkDeviceWaitIdle(device);
     }
     

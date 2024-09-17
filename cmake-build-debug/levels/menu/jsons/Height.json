@@ -1,0 +1,172 @@
+{
+  "loops": [
+    {
+      "description": "Ground",
+      "i": {
+        "start": 0,
+        "end": 40
+      },
+      "j": {
+        "start": 0,
+        "end": 40
+      },
+      "height": 0.0
+    },
+    {
+      "description": "Border #1",
+      "i": {
+        "start": 0,
+        "end": 40
+      },
+      "j": {
+        "start": 0,
+        "end": 2
+      },
+      "height": 12.0
+    },
+    {
+      "description": "Border #2",
+      "i": {
+        "start": 38,
+        "end": 40
+      },
+      "j": {
+        "start": 0,
+        "end": 40
+      },
+      "height": 12.0
+    },
+    {
+      "description": "Border #3",
+      "i": {
+        "start": 0,
+        "end": 40
+      },
+      "j": {
+        "start": 38,
+        "end": 40
+      },
+      "height": 12.0
+    },
+    {
+      "description": "Border #4",
+      "i": {
+        "start": 0,
+        "end": 2
+      },
+      "j": {
+        "start": 0,
+        "end": 40
+      },
+      "height": 12.0
+    },
+    {
+      "description": "Wall #1",
+      "i": {
+        "start": 2,
+        "end": 18
+      },
+      "j": {
+        "start": 9,
+        "end": 11
+      },
+      "height": 8.0
+    },
+    {
+      "description": "Wall #2",
+      "i": {
+        "start": 2,
+        "end": 18
+      },
+      "j": {
+        "start": 19,
+        "end": 21
+      },
+      "height": 8.0
+    },
+    {
+      "description": "Wall #3",
+      "i": {
+        "start": 2,
+        "end": 18
+      },
+      "j": {
+        "start": 29,
+        "end": 31
+      },
+      "height": 8.0
+    },
+    {
+      "description": "Wall #4",
+      "i": {
+        "start": 26,
+        "end": 28
+      },
+      "j": {
+        "start": 17,
+        "end": 33
+      },
+      "height": 8.0
+    },
+    {
+      "description": "Wall #5",
+      "i": {
+        "start": 18,
+        "end": 34
+      },
+      "j": {
+        "start": 19,
+        "end": 21
+      },
+      "height": 8.0
+    },
+    {
+      "description": "Step #1",
+      "i": {
+        "start": 9,
+        "end": 11
+      },
+      "j": {
+        "start": 4,
+        "end": 6
+      },
+      "height": 1.0
+    },
+    {
+      "description": "Step #2",
+      "i": {
+        "start": 20,
+        "end": 22
+      },
+      "j": {
+        "start": 3,
+        "end": 5
+      },
+      "height": 1.0
+    },
+    {
+      "description": "Step #3",
+      "i": {
+        "start": 34,
+        "end": 36
+      },
+      "j": {
+        "start": 17,
+        "end": 19
+      },
+      "height": 2.0
+    },
+    {
+      "description": "Step #4",
+      "i": {
+        "start": 36,
+        "end": 38
+      },
+      "j": {
+        "start": 17,
+        "end": 19
+      },
+      "height": 2.0
+    }
+  ]
+}

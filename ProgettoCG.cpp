@@ -1,8 +1,6 @@
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
-
-std::string scene = "Level1";
-bool closeapp = false;
+#include "modules/Menu.hpp"
 
 // Texts of the game
 std::vector<SingleText> textLives = {
@@ -25,6 +23,7 @@ std::vector<SingleText> textFinish = {
     {3, {"", "", "YOU WIN",""}, 0, 0},
     {3, {"", "", "GAME OVER",""}, 0, 0}
 };
+
 
 // UBO structs
 struct SphereMUBO {
@@ -714,9 +713,9 @@ protected:
     }
 
     void updateUniformBuffer(uint32_t currentImage) override {
+
         static bool debounce = false;
         static int curDebounce = 0;
-
 
         // Get inputs
         float deltaTime;
@@ -725,6 +724,7 @@ protected:
         bool fireInput = false;
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
 
+        /* Just for lights if needed
         if(glfwGetKey(window, GLFW_KEY_1)) {
             if(!debounce) {
                 debounce = true;
@@ -760,13 +760,13 @@ protected:
                 debounce = false;
                 curDebounce = 0;
             }
-        }
+        } */
 
         // Use inputs
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) { // Game exit
             glfwSetWindowShouldClose(window, GL_TRUE);
-            scene = "Menu";
-            closeapp = false;
+
+            checkCurrentScene();
         }
         if (movementInput.x == -1.0f || rotationInput.y == -1.0f) { // View left
             if (!viewPosLock.x)
@@ -806,23 +806,48 @@ protected:
             sphereJumping = true;
         }
         if (rotationInput.z == -1.0f  && sphereOnGround()) { // Interact
-            if (levelType[(int)spherePos.x][(int)spherePos.z] == 1.0f) {
-                sphereCheckpoint = spherePos;
-            }
-            if (levelType[(int)spherePos.x][(int)spherePos.z] == 2.0f) {
-                sphereAccel = sphereAccelSuper;
-                sphereAccelUp = sphereAccelUpSuper;
-                sphereJump = sphereJumpSuper;
-            }
-            if (levelType[(int)spherePos.x][(int)spherePos.z] == 3.0f) {
-                viewDistance = viewDistanceSuper;
-                viewHeight = viewHeightSuper;
-            }
-            if (levelType[(int)spherePos.x][(int)spherePos.z] == 4.0f) {
-                textFinishIndex = 1;
-                sphereAccel = 0.0f;
-                sphereJump = 0.0f;
-                viewSpeed = 0.0f;
+            if(currentScene == MENU){
+                bool closeWindow = false;
+                switch((int)levelType[(int)spherePos.x][(int)spherePos.z]){
+                    case 1:
+                        currentScene = LEVEL1;
+                        closeWindow = true;
+                        break;
+                    case 2:
+                        currentScene = LEVEL2;
+                        closeWindow = true;
+                        break;
+                    default:
+                        closeWindow = false;
+                }
+                if(closeWindow){
+                    glfwSetWindowShouldClose(window, GL_TRUE);
+                }
+            } else {
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0f) {
+                    sphereCheckpoint = spherePos;
+                }
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0f) {
+                    sphereAccel = sphereAccelSuper;
+                    sphereAccelUp = sphereAccelUpSuper;
+                    sphereJump = sphereJumpSuper;
+                }
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0f) {
+                    viewDistance = viewDistanceSuper;
+                    viewHeight = viewHeightSuper;
+                }
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0f) {
+                    textFinishIndex = 1;
+                    sphereAccel = 0.0f;
+                    sphereJump = 0.0f;
+                    viewSpeed = 0.0f;
+                }
+                /* TODO: Super light to add
+                if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0f) {
+                    ambientStrength = 0.5;
+                    lightStatus.x = 1.0;
+                }
+                 */
             }
         }
 
@@ -1032,6 +1057,13 @@ protected:
     }
 };
 
+class Menu : public Level {
+public:
+    Menu() {
+        levelPathPrefix = "levels/menu/";
+    }
+};
+
 class Level1 : public Level {
 public:
     Level1() {
@@ -1046,21 +1078,26 @@ public:
     }
 };
 
-
-
 int main() {
-    Level1 app1;
-    Level2 app2;
-
-
+    Level* app;
 
     try {
-        while (!closeapp) {
-            if (scene == "Menu") {
-                app2.run();
-            }
-            else if (scene == "Level1") {
-                app1.run();
+        while (!closeApp) {
+            switch(currentScene){
+                case MENU:
+                    app = new Menu();
+                    app->run();
+                    break;
+
+                case LEVEL1:
+                    app = new Level1();
+                    app->run();
+                    break;
+
+                case LEVEL2:
+                    app = new Level2();
+                    app->run();
+                    break;
             }
         }
     } catch (const std::exception& e) {
