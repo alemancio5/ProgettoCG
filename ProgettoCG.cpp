@@ -1,3 +1,4 @@
+#include <thread>
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
 
@@ -11,7 +12,7 @@ std::vector<SingleText> textLives = {
     {1, {"LIVES: 3", "","",""}, 0, 0}
 };
 std::vector<SingleText> textMessage = {
-    {2, {"", "E:", "",""}, 0, 0},
+    {2, {"", "", "",""}, 0, 0},
     {2, {"", "E: CHECKPOINT", "",""}, 0, 0},
     {2, {"", "E: SUPER SPEED", "",""}, 0, 0},
     {2, {"", "E: SUPER VIEW", "",""}, 0, 0},
@@ -22,7 +23,8 @@ std::vector<SingleText> textMessage = {
 std::vector<SingleText> textFinish = {
     {3, {"", "", "",""}, 0, 0},
     {3, {"", "", "YOU WIN",""}, 0, 0},
-    {3, {"", "", "GAME OVER",""}, 0, 0}
+    {3, {"", "", "GAME OVER",""}, 0, 0},
+    {3, {"", "", "GOT IT!",""}, 0, 0}
 };
 
 // UBO structs
@@ -839,16 +841,19 @@ protected:
         if (rotationInput.z == -1.0f  && sphereOnGround()) {
             // Checkpoint
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0f) {
+                textFinishIndex = 3;
                 sphereCheckpoint = spherePos;
             }
             //Super Speed
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0f) {
+                textFinishIndex = 3;
                 sphereAccel = sphereAccelSuper;
                 sphereAccelUp = sphereAccelUpSuper;
                 sphereJump = sphereJumpSuper;
             }
             // Super View
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0f) {
+                textFinishIndex = 3;
                 viewDistance = viewDistanceSuper;
                 viewHeight = viewHeightSuper;
             }
@@ -861,6 +866,7 @@ protected:
             }
             // Super Light
             if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0f) {
+                textFinishIndex = 3;
                 ambientStrength = 0.5;
                 lightStatus.x = 1.0;
             }
@@ -934,6 +940,7 @@ protected:
             RebuildPipeline();
         } else {
             textMessageIndex = 0;
+            textFinishIndex = 0;
             RebuildPipeline();
         }
 
