@@ -16,6 +16,7 @@ std::vector<SingleText> textMessage = {
     {2, {"", "E: CHECKPOINT", "",""}, 0, 0},
     {2, {"", "E: SUPER SPEED", "",""}, 0, 0},
     {2, {"", "E: SUPER VIEW", "",""}, 0, 0},
+    {2, {"", "E: SUPER LIGHT", "",""}, 0, 0},
     {2, {"", "E: WIN", "",""}, 0, 0},
     {2, {"", "E: LEVEL 1", "",""}, 0, 0},
     {2, {"", "E: LEVEL 2", "",""}, 0, 0}
@@ -206,6 +207,8 @@ protected:
     Texture T_Item{};
     DescriptorSet DS_Item;
     ItemMUBO UBOm_Item{};
+    int itemCur = 0;
+    int itemOld = 0;
     std::string itemPathVert = "shaders/EmissionVert.spv";
     std::string itemPathFrag = "shaders/EmissionFrag.spv";
     std::string itemPathModel = "models/Item.obj";
@@ -842,11 +845,13 @@ protected:
             // Checkpoint
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0f) {
                 textFinishIndex = 3;
+                RebuildPipeline();
                 sphereCheckpoint = spherePos;
             }
             //Super Speed
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0f) {
                 textFinishIndex = 3;
+                RebuildPipeline();
                 sphereAccel = sphereAccelSuper;
                 sphereAccelUp = sphereAccelUpSuper;
                 sphereJump = sphereJumpSuper;
@@ -854,19 +859,22 @@ protected:
             // Super View
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0f) {
                 textFinishIndex = 3;
+                RebuildPipeline();
                 viewDistance = viewDistanceSuper;
                 viewHeight = viewHeightSuper;
             }
             // Win
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0f) {
                 textFinishIndex = 1;
+                RebuildPipeline();
                 sphereAccel = 0.0f;
                 sphereJump = 0.0f;
                 viewSpeed = 0.0f;
             }
             // Super Light
-            if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0f) {
+            if (levelType[(int)spherePos.x][(int)spherePos.z] == 6.0f) {
                 textFinishIndex = 3;
+                RebuildPipeline();
                 ambientStrength = 0.5;
                 lightStatus.x = 1.0;
             }
@@ -910,25 +918,30 @@ protected:
 
     void updateSphere(float deltaTime) {
         // Type check
+        itemOld = itemCur;
         if (levelType[(int)spherePos.x][(int)spherePos.z] == 1.0 && sphereOnGround()) {
+            itemCur = 1;
             textMessageIndex = 1;
-            RebuildPipeline();
         } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 2.0 && sphereOnGround()) {
+            itemCur = 2;
             textMessageIndex = 2;
-            RebuildPipeline();
         } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 3.0 && sphereOnGround()) {
+            itemCur = 3;
             textMessageIndex = 3;
-            RebuildPipeline();
         } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 4.0 && sphereOnGround()) {
+            itemCur = 4;
             textMessageIndex = 4;
-            RebuildPipeline();
-        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 11.0 && sphereOnGround()) {
+        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 6.0 && sphereOnGround()) {
+            itemCur = 6;
             textMessageIndex = 5;
-            RebuildPipeline();
-        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 12.0 && sphereOnGround()) {
+        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 11.0 && sphereOnGround()) {
+            itemCur = 11;
             textMessageIndex = 6;
-            RebuildPipeline();
+        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 12.0 && sphereOnGround()) {
+            itemCur = 12;
+            textMessageIndex = 7;
         } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0 && sphereOnGround()) {
+            itemCur = 5;
             spherePos = sphereCheckpoint;
             sphereLives--;
             if (sphereLives == 0) {
@@ -937,10 +950,13 @@ protected:
                 sphereJump = 0.0f;
                 viewSpeed = 0.0f;
             }
-            RebuildPipeline();
         } else {
+            itemCur = 0;
             textMessageIndex = 0;
             textFinishIndex = 0;
+        }
+
+        if (itemCur != itemOld) {
             RebuildPipeline();
         }
 

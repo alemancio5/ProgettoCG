@@ -15,18 +15,6 @@
     {
       "description": "Checkpoint #1",
       "i": {
-        "start": 4,
-        "end": 6
-      },
-      "j": {
-        "start": 4,
-        "end": 6
-      },
-      "type": 1.0
-    },
-    {
-      "description": "Checkpoint #2",
-      "i": {
         "start": 79,
         "end": 81
       },
@@ -37,7 +25,7 @@
       "type": 1.0
     },
     {
-      "description": "Checkpoint #3",
+      "description": "Checkpoint #2",
       "i": {
         "start": 33,
         "end": 35
@@ -347,6 +335,18 @@
         "end": 30
       },
       "type": 5.0
+    },
+    {
+      "description": "Super Light #1",
+      "i": {
+        "start": 76,
+        "end": 78
+      },
+      "j": {
+        "start": 19,
+        "end": 21
+      },
+      "type": 6.0
     }
   ]
 }
