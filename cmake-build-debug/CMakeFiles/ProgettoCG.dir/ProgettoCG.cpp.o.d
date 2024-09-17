@@ -1187,5 +1187,4 @@ CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o: \
   /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/headers/sinfl.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/15.0.0/include/arm_neon.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/15.0.0/include/arm_bf16.h \
-  /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/modules/TextMaker.hpp \
-  /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/modules/Menu.hpp
+  /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/modules/TextMaker.hpp

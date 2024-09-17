@@ -1178,7 +1178,6 @@ CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o: /Users/alessandromancini/Ale/Coding/
   /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/headers/stb_image_write.h \
   /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/headers/tiny_gltf.h \
   /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/headers/tiny_obj_loader.h \
-  /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/modules/Menu.hpp \
   /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/modules/Starter.hpp \
   /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/modules/TextMaker.hpp \
   /usr/local/include/vk_video/vulkan_video_codec_h264std.h \
@@ -2258,8 +2257,6 @@ CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o: /Users/alessandromancini/Ale/Coding/
 /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/sched.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/__iterator/back_insert_iterator.h:
-
-/Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/modules/Menu.hpp:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/__iterator/advance.h:
 

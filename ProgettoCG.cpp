@@ -1,8 +1,9 @@
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
-#include "modules/Menu.hpp"
 
-// Texts of the game
+
+
+// Text
 std::vector<SingleText> textLives = {
     {1, {"LIVES: 0", "", "",""}, 0, 0},
     {1, {"LIVES: 1", "", "",""}, 0, 0},
@@ -23,7 +24,6 @@ std::vector<SingleText> textFinish = {
     {3, {"", "", "YOU WIN",""}, 0, 0},
     {3, {"", "", "GAME OVER",""}, 0, 0}
 };
-
 
 // UBO structs
 struct SphereMUBO {
@@ -66,7 +66,7 @@ struct WallMUBO {
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
 };
-struct ShaderLightPUBO {
+struct ShadersPUBO {
     alignas(16) glm::vec3 viewPos;
     alignas(16) glm::vec3 lightPos;
     alignas(16) glm::vec4 lightColor;
@@ -119,10 +119,26 @@ struct WallVertex {
     glm::vec3 norm;
 };
 
+// App
+enum AppEnum {
+    MENU,
+    LEVEL1,
+    LEVEL2
+};
+bool appClosing = false;
+AppEnum appCurrent = MENU;
+
 
 
 class Level : public BaseProject {
 protected:
+
+    // Text
+    TextMaker textLivesBanner;
+    TextMaker textMessageBanner;
+    int textMessageIndex = 0;
+    TextMaker textFinishBanner;
+    int textFinishIndex = 0;
 
     // Level
     static const int levelSize = 100;
@@ -132,20 +148,6 @@ protected:
     std::string levelPathPrefix = "";
     std::string levelPathHeight = "jsons/Height.json";
     std::string levelPathType = "jsons/Type.json";
-
-    // Shader parameters
-    ShaderLightPUBO UBOp_ShaderLights;
-    glm::vec4 lightStatus = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
-    glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
-    glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
-    float LInt = 0.5f;
-    float ambientStrength = 10.0f;
-    float specularStrength = 0.1f;
-    float shininess = 10.0f;
-    float cosIn = glm::cos(0.4f);
-    float cosOut = glm::cos(0.5f);
-    std::string lightPathVert = "shaders/NormalVert.spv";
-    std::string lightPathFrag = "shaders/NormalFrag.spv";
 
     // Sphere
     DescriptorSetLayout DSL_Sphere;
@@ -168,16 +170,16 @@ protected:
     float sphereGravity = -20.0f;
     float sphereRadius = 0.5f;
     glm::mat4 sphereMatrix = glm::mat4(1.0f);
-    glm::vec3 spherePos{};
-    glm::vec3 sphereCheckpoint{};
-    glm::vec3 spherePosOld{};
+    glm::vec3 spherePos = levelStart + glm::vec3(0.0f, sphereRadius, 0.0f);
+    glm::vec3 sphereCheckpoint = spherePos;
+    glm::vec3 spherePosOld = spherePos;
     glm::vec3 spherePosSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 spherePosAccel = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::quat sphereRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotAccel = glm::vec3(0.0f, 0.0f, 0.0f);
-    std::string spherePathVert = "shaders/SphereVert.spv";
-    std::string spherePathFrag = "shaders/SphereFrag.spv";
+    std::string spherePathVert = "shaders/EmissionVert.spv";
+    std::string spherePathFrag = "shaders/EmissionFrag.spv";
     std::string spherePathModel = "models/Sphere.obj";
     std::string spherePathTexture = "textures/Sphere.jpg";
 
@@ -189,8 +191,8 @@ protected:
     Texture T_Plane{};
     DescriptorSet DS_Plane;
     PlaneMUBO UBOm_Plane{};
-    std::string planePathVert = "shaders/PlaneVert.spv";
-    std::string planePathFrag = "shaders/PlaneFrag.spv";
+    std::string planePathVert = "shaders/NormalVert.spv";
+    std::string planePathFrag = "shaders/NormalFrag.spv";
     std::string planePathModel = "models/Plane.obj";
     std::string planePathTexture = "textures/Plane.jpg";
 
@@ -202,8 +204,8 @@ protected:
     Texture T_Item{};
     DescriptorSet DS_Item;
     ItemMUBO UBOm_Item{};
-    std::string itemPathVert = "shaders/ItemVert.spv";
-    std::string itemPathFrag = "shaders/ItemFrag.spv";
+    std::string itemPathVert = "shaders/EmissionVert.spv";
+    std::string itemPathFrag = "shaders/EmissionFrag.spv";
     std::string itemPathModel = "models/Item.obj";
     std::string itemPathTexture = "textures/Item.jpg";
 
@@ -215,8 +217,8 @@ protected:
     Texture T_Step{};
     DescriptorSet DS_Step;
     StepMUBO UBOm_Step{};
-    std::string stepPathVert = "shaders/StepVert.spv";
-    std::string stepPathFrag = "shaders/StepFrag.spv";
+    std::string stepPathVert = "shaders/NormalVert.spv";
+    std::string stepPathFrag = "shaders/NormalFrag.spv";
     std::string stepPathModel = "models/Step.obj";
     std::string stepPathTexture = "textures/Step.jpg";
 
@@ -228,8 +230,8 @@ protected:
     Texture T_Iron{};
     DescriptorSet DS_Iron;
     IronMUBO UBOm_Iron{};
-    std::string ironPathVert = "shaders/IronVert.spv";
-    std::string ironPathFrag = "shaders/IronFrag.spv";
+    std::string ironPathVert = "shaders/NormalVert.spv";
+    std::string ironPathFrag = "shaders/NormalFrag.spv";
     std::string ironPathModel = "models/Iron.obj";
     std::string ironPathTexture = "textures/Iron.jpg";
 
@@ -241,8 +243,8 @@ protected:
     Texture T_Decoration{};
     DescriptorSet DS_Decoration;
     DecorationMUBO UBOm_Decoration{};
-    std::string decorationPathVert = "shaders/DecorationVert.spv";
-    std::string decorationPathFrag = "shaders/DecorationFrag.spv";
+    std::string decorationPathVert = "shaders/NormalVert.spv";
+    std::string decorationPathFrag = "shaders/NormalFrag.spv";
     std::string decorationPathModel = "models/Decoration.obj";
     std::string decorationPathTexture = "textures/Decoration.jpg";
 
@@ -254,8 +256,8 @@ protected:
     Texture T_Border;
     DescriptorSet DS_Border;
     BorderMUBO UBOm_Border;
-    std::string borderPathVert = "shaders/BorderVert.spv";
-    std::string borderPathFrag = "shaders/BorderFrag.spv";
+    std::string borderPathVert = "shaders/NormalVert.spv";
+    std::string borderPathFrag = "shaders/NormalFrag.spv";
     std::string borderPathModel = "models/Border.obj";
     std::string borderPathTexture = "textures/Border.jpg";
 
@@ -267,8 +269,8 @@ protected:
     Texture T_Wall{};
     DescriptorSet DS_Wall;
     WallMUBO UBOm_Wall{};
-    std::string wallPathVert = "shaders/WallVert.spv";
-    std::string wallPathFrag = "shaders/WallFrag.spv";
+    std::string wallPathVert = "shaders/NormalVert.spv";
+    std::string wallPathFrag = "shaders/NormalFrag.spv";
     std::string wallPathModel = "models/Wall.obj";
     std::string wallPathTexture = "textures/Wall.jpg";
 
@@ -289,16 +291,22 @@ protected:
     glm::vec3 viewPosLock = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 viewDir{};
 
-    // Text
-    TextMaker textLivesBanner;
-    TextMaker textMessageBanner;
-    int textMessageIndex = 0;
-    TextMaker textFinishBanner;
-    int textFinishIndex = 0;
-
     // Projection
     glm::mat4 projectionMatrix{};
     glm::mat4 projectionViewMatrix{};
+
+    // Shaders
+    ShadersPUBO UBOp_Shaders;
+    glm::vec4 lightStatus = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
+    glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
+    glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
+    float LInt = 0.5f;
+    float ambientStrength = 10.0f;
+    float specularStrength = 0.1f;
+    float shininess = 10.0f;
+    float cosIn = glm::cos(0.4f);
+    float cosOut = glm::cos(0.5f);
+
 
     void setWindowParameters() override {
         windowWidth = 800;
@@ -309,14 +317,20 @@ protected:
         Ar = (float)windowWidth / (float)windowHeight;
     }
 
+
     void onWindowResize(int w, int h) override {
         Ar = (float)w / (float)h;
     }
 
+
     void localInit() override {
+        // Text
+        textLivesBanner.init(this, &textLives);
+        textMessageBanner.init(this, &textMessage);
+        textFinishBanner.init(this, &textFinish);
+
         // Level
         levelInit();
-
 
         // Sphere
         DSL_Sphere.init(this, {
@@ -333,16 +347,11 @@ protected:
         M_Sphere.init(this, &VD_Sphere, levelPathPrefix + spherePathModel, OBJ);
         T_Sphere.init(this, levelPathPrefix + spherePathTexture);
 
-        spherePos = levelStart + glm::vec3(0.0f, sphereRadius, 0.0f);
-        spherePosOld = spherePos;
-        sphereCheckpoint = spherePos;
-
-
         // Plane
         DSL_Plane.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(PlaneMUBO),     1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,           1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShadersPUBO), 1},
         });
         VD_Plane.init(this, {
             {0, sizeof(PlaneVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -351,16 +360,15 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(PlaneVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PlaneVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Plane.init(this, &VD_Plane, lightPathVert, lightPathFrag, {&DSL_Plane});
+        P_Plane.init(this, &VD_Plane, planePathVert, planePathFrag, {&DSL_Plane});
         M_Plane.init(this, &VD_Plane, levelPathPrefix + planePathModel, OBJ);
         T_Plane.init(this, levelPathPrefix + planePathTexture);
 
-
         // Item
         DSL_Item.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ItemMUBO),      1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,           1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShadersPUBO), 1},
         });
         VD_Item.init(this, {
             {0, sizeof(ItemVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -369,16 +377,15 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ItemVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ItemVertex, norm), sizeof(glm::vec3), NORMAL},
         });
-        P_Item.init(this, &VD_Item, lightPathVert, lightPathFrag, {&DSL_Item});
+        P_Item.init(this, &VD_Item, itemPathVert, itemPathFrag, {&DSL_Item});
         M_Item.init(this, &VD_Item, levelPathPrefix + itemPathModel, OBJ);
         T_Item.init(this, levelPathPrefix + itemPathTexture);
 
-
         // Step
         DSL_Step.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(StepMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(StepMUBO),      1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,           1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShadersPUBO), 1},
         });
         VD_Step.init(this, {
             {0, sizeof(StepVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -387,16 +394,15 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(StepVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(StepVertex, norm), sizeof(glm::vec3), NORMAL},
         });
-        P_Step.init(this, &VD_Step, lightPathVert, lightPathFrag, {&DSL_Step});
+        P_Step.init(this, &VD_Step, stepPathVert, stepPathFrag, {&DSL_Step});
         M_Step.init(this, &VD_Step, levelPathPrefix + stepPathModel, OBJ);
         T_Step.init(this, levelPathPrefix + stepPathTexture);
 
-
         // Iron
         DSL_Iron.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(IronMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(IronMUBO),      1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,           1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShadersPUBO), 1},
         });
         VD_Iron.init(this, {
             {0, sizeof(IronVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -405,16 +411,15 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(IronVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(IronVertex, norm), sizeof(glm::vec3), NORMAL},
         });
-        P_Iron.init(this, &VD_Iron, lightPathVert, lightPathFrag, {&DSL_Iron});
+        P_Iron.init(this, &VD_Iron, ironPathVert, ironPathFrag, {&DSL_Iron});
         M_Iron.init(this, &VD_Iron, levelPathPrefix + ironPathModel, OBJ);
         T_Iron.init(this, levelPathPrefix + ironPathTexture);
-
 
         // Decoration
         DSL_Decoration.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(DecorationMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,            1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShadersPUBO),  1},
         });
         VD_Decoration.init(this, {
             {0, sizeof(DecorationVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -423,16 +428,15 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(DecorationVertex, uv), sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(DecorationVertex, norm), sizeof(glm::vec3), NORMAL},
         });
-        P_Decoration.init(this, &VD_Decoration, lightPathVert, lightPathFrag, {&DSL_Decoration});
+        P_Decoration.init(this, &VD_Decoration, decorationPathVert, decorationPathFrag, {&DSL_Decoration});
         M_Decoration.init(this, &VD_Decoration, levelPathPrefix + decorationPathModel, OBJ);
         T_Decoration.init(this, levelPathPrefix + decorationPathTexture);
 
-
         // Border
         DSL_Border.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BorderMUBO),    1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,           1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShadersPUBO), 1},
         });
         VD_Border.init(this, {
                 {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -441,16 +445,15 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(BorderVertex, uv),      sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BorderVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Border.init(this, &VD_Border, lightPathVert, lightPathFrag, {&DSL_Border});
+        P_Border.init(this, &VD_Border, borderPathVert, borderPathFrag, {&DSL_Border});
         M_Border.init(this, &VD_Border, levelPathPrefix + borderPathModel, OBJ);
         T_Border.init(this, levelPathPrefix + borderPathTexture);
 
-
         // Wall
         DSL_Wall.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),   1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,        1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShaderLightPUBO), 1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(WallMUBO),      1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,           1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShadersPUBO), 1},
         });
         VD_Wall.init(this, {
             {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -459,22 +462,16 @@ protected:
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
             {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, norm), sizeof(glm::vec3), NORMAL}
         });
-        P_Wall.init(this, &VD_Wall, lightPathVert, lightPathFrag, {&DSL_Wall});
+        P_Wall.init(this, &VD_Wall, wallPathVert, wallPathFrag, {&DSL_Wall});
         M_Wall.init(this, &VD_Wall, levelPathPrefix + wallPathModel, OBJ);
         T_Wall.init(this, levelPathPrefix + wallPathTexture);
-
-
-        // Text
-        textLivesBanner.init(this, &textLives);
-        textMessageBanner.init(this, &textMessage);
-        textFinishBanner.init(this, &textFinish);
-
 
         // Others
         DPSZs.uniformBlocksInPool = 15;
         DPSZs.texturesInPool = 11;
         DPSZs.setsInPool = 11;
     }
+
 
     void levelInit() {
         // Height initialization
@@ -512,7 +509,13 @@ protected:
         }
     }
 
+
     void pipelinesAndDescriptorSetsInit() override {
+        // Text
+        textLivesBanner.pipelinesAndDescriptorSetsInit();
+        textMessageBanner.pipelinesAndDescriptorSetsInit();
+        textFinishBanner.pipelinesAndDescriptorSetsInit();
+
         // Sphere
         P_Sphere.create();
         DS_Sphere.init(this, &DSL_Sphere, {&T_Sphere});
@@ -544,14 +547,15 @@ protected:
         // Wall
         P_Wall.create();
         DS_Wall.init(this, &DSL_Border, {&T_Border});
-
-        // Text
-        textLivesBanner.pipelinesAndDescriptorSetsInit();
-        textMessageBanner.pipelinesAndDescriptorSetsInit();
-        textFinishBanner.pipelinesAndDescriptorSetsInit();
     }
 
+
     void localCleanup() override {
+        // Text
+        textLivesBanner.localCleanup();
+        textMessageBanner.localCleanup();
+        textFinishBanner.localCleanup();
+
         // Sphere
         DSL_Sphere.cleanup();
         VD_Sphere.cleanup();
@@ -608,17 +612,18 @@ protected:
         M_Wall.cleanup();
         T_Wall.cleanup();
 
-        // Text
-        textLivesBanner.localCleanup();
-        textMessageBanner.localCleanup();
-        textFinishBanner.localCleanup();
-
         // Others
         glfwDestroyWindow(window);
         glfwTerminate();
     }
 
+
     void pipelinesAndDescriptorSetsCleanup() override {
+        // Text
+        textLivesBanner.pipelinesAndDescriptorSetsCleanup();
+        textMessageBanner.pipelinesAndDescriptorSetsCleanup();
+        textFinishBanner.pipelinesAndDescriptorSetsCleanup();
+
         // Sphere
         P_Sphere.cleanup();
         DS_Sphere.cleanup();
@@ -650,14 +655,15 @@ protected:
         // Wall
         P_Wall.cleanup();
         DS_Wall.cleanup();
-
-        // Text
-        textLivesBanner.pipelinesAndDescriptorSetsCleanup();
-        textMessageBanner.pipelinesAndDescriptorSetsCleanup();
-        textFinishBanner.pipelinesAndDescriptorSetsCleanup();
     }
 
+
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
+        // Text
+        textLivesBanner.populateCommandBuffer(commandBuffer, currentImage, sphereLives);
+        textMessageBanner.populateCommandBuffer(commandBuffer, currentImage, textMessageIndex);
+        textFinishBanner.populateCommandBuffer(commandBuffer, currentImage, textFinishIndex);
+
         // Sphere
         P_Sphere.bind(commandBuffer);
         M_Sphere.bind(commandBuffer);
@@ -705,17 +711,13 @@ protected:
         M_Wall.bind(commandBuffer);
         DS_Wall.bind(commandBuffer, P_Wall, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Wall.indices.size()), 1, 0, 0, 0);
-
-        // Text
-        textLivesBanner.populateCommandBuffer(commandBuffer, currentImage, sphereLives);
-        textMessageBanner.populateCommandBuffer(commandBuffer, currentImage, textMessageIndex);
-        textFinishBanner.populateCommandBuffer(commandBuffer, currentImage, textFinishIndex);
     }
 
-    void updateUniformBuffer(uint32_t currentImage) override {
 
+    void updateUniformBuffer(uint32_t currentImage) override {
+        // Debounce
         static bool debounce = false;
-        static int curDebounce = 0;
+        static int debounceCur = 0;
 
         // Get inputs
         float deltaTime;
@@ -723,137 +725,9 @@ protected:
         auto rotationInput = glm::vec3(0.0f);
         bool fireInput = false;
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
+        getInputs(deltaTime, movementInput, rotationInput, fireInput);
 
-        std::cout << viewPos.x << " " << viewPos.y << " " << viewPos.z << std::endl;
-
-        /* Just for lights if needed
-        if(glfwGetKey(window, GLFW_KEY_1)) {
-            if(!debounce) {
-                debounce = true;
-                curDebounce = GLFW_KEY_1;
-                lightStatus.x = 1 - lightStatus.x;
-            }
-        } else {
-            if((curDebounce == GLFW_KEY_1) && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }
-        }
-        if(glfwGetKey(window, GLFW_KEY_2)) {
-            if(!debounce) {
-                debounce = true;
-                curDebounce = GLFW_KEY_2;
-                lightStatus.y = 1 - lightStatus.y;
-            }
-        } else {
-            if((curDebounce == GLFW_KEY_2) && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }
-        }
-        if(glfwGetKey(window, GLFW_KEY_3)) {
-            if(!debounce) {
-                debounce = true;
-                curDebounce = GLFW_KEY_3;
-                lightStatus.z = 1 - lightStatus.z;
-            }
-        } else {
-            if((curDebounce == GLFW_KEY_3) && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }
-        } */
-
-        // Use inputs
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) { // Game exit
-            glfwSetWindowShouldClose(window, GL_TRUE);
-
-            checkCurrentScene();
-        }
-        if (movementInput.x == -1.0f || rotationInput.y == -1.0f) { // View left
-            if (!viewPosLock.x)
-                viewAzimuth += viewSpeed * deltaTime;
-        } else if (movementInput.x == 1.0f || rotationInput.y == 1.0f) { // View right
-            if (!viewPosLock.z)
-                viewAzimuth -= viewSpeed * deltaTime;
-        }
-        if (rotationInput.x == -1.0f) { // View up
-            viewElevation += viewSpeed * deltaTime;
-            if (viewElevation > viewElevationMax)
-                viewElevation = viewElevationMax;
-        } else if (rotationInput.x == 1.0f) { // View down
-            viewElevation -= viewSpeed * deltaTime;
-            if (viewElevation < viewElevationMin)
-                viewElevation = viewElevationMin;
-        }
-        if (movementInput.z == -1.0f) { // Sphere forward
-            if (sphereOnGround()) {
-                spherePosAccel = -viewDir * sphereAccel;
-            } else {
-                spherePosAccel = -viewDir * sphereAccelUp;
-            }
-        } else if (movementInput.z == 1.0f) { // Sphere backward
-            if (sphereOnGround()) {
-                spherePosAccel = viewDir * sphereAccel;
-            } else {
-                spherePosAccel = viewDir * sphereAccelUp;
-            }
-        } else {
-            spherePosAccel.x = 0.0f;
-            spherePosAccel.z = 0.0f;
-        }
-        if (fireInput && !sphereJumping) { // Sphere jump
-            spherePosSpeed.y = sphereJump;
-            sphereGoingUp = true;
-            sphereJumping = true;
-        }
-        if (rotationInput.z == -1.0f  && sphereOnGround()) { // Interact
-            if(currentScene == MENU){
-                bool closeWindow = false;
-                switch((int)levelType[(int)spherePos.x][(int)spherePos.z]){
-                    case 11:
-                        currentScene = LEVEL1;
-                        closeWindow = true;
-                        break;
-                    case 12:
-                        currentScene = LEVEL2;
-                        closeWindow = true;
-                        break;
-                    default:
-                        closeWindow = false;
-                }
-                if(closeWindow){
-                    glfwSetWindowShouldClose(window, GL_TRUE);
-                }
-            } else {
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0f) {
-                    sphereCheckpoint = spherePos;
-                }
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0f) {
-                    sphereAccel = sphereAccelSuper;
-                    sphereAccelUp = sphereAccelUpSuper;
-                    sphereJump = sphereJumpSuper;
-                }
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0f) {
-                    viewDistance = viewDistanceSuper;
-                    viewHeight = viewHeightSuper;
-                }
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0f) {
-                    textFinishIndex = 1;
-                    sphereAccel = 0.0f;
-                    sphereJump = 0.0f;
-                    viewSpeed = 0.0f;
-                }
-                /* TODO: Super light to add
-                if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0f) {
-                    ambientStrength = 0.5;
-                    lightStatus.x = 1.0;
-                }
-                 */
-            }
-        }
-
-        // View update
+        // Update things
         updateView();
 
         // Sphere update
@@ -867,6 +741,142 @@ protected:
         // UBOs update
         updateUBO(currentImage);
     }
+
+
+    void getInputs(float deltaTime, glm::vec3 &movementInput, glm::vec3 &rotationInput, bool &fireInput) {
+        // Just for lights control in development phase
+        /*
+        if (glfwGetKey(window, GLFW_KEY_1)) {
+            if (!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_1;
+                lightStatus.x = 1 - lightStatus.x;
+            }
+        } else {
+            if ((curDebounce == GLFW_KEY_1) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_2)) {
+            if (!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_2;
+                lightStatus.y = 1 - lightStatus.y;
+            }
+        } else {
+            if ((curDebounce == GLFW_KEY_2) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_3)) {
+            if (!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_3;
+                lightStatus.z = 1 - lightStatus.z;
+            }
+        } else {
+            if ((curDebounce == GLFW_KEY_3) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+        */
+
+        // Esc
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+            appManage();
+            glfwSetWindowShouldClose(window, GL_TRUE);
+        }
+
+        // Left and right
+        if (movementInput.x == -1.0f || rotationInput.y == -1.0f) {
+            if (!viewPosLock.x)
+                viewAzimuth += viewSpeed * deltaTime;
+        } else if (movementInput.x == 1.0f || rotationInput.y == 1.0f) {
+            if (!viewPosLock.z)
+                viewAzimuth -= viewSpeed * deltaTime;
+        }
+
+        // Up and down
+        if (rotationInput.x == -1.0f) {
+            viewElevation += viewSpeed * deltaTime;
+            if (viewElevation > viewElevationMax)
+                viewElevation = viewElevationMax;
+        } else if (rotationInput.x == 1.0f) {
+            viewElevation -= viewSpeed * deltaTime;
+            if (viewElevation < viewElevationMin)
+                viewElevation = viewElevationMin;
+        }
+
+        // W and S
+        if (movementInput.z == -1.0f) {
+            if (sphereOnGround()) {
+                spherePosAccel = -viewDir * sphereAccel;
+            } else {
+                spherePosAccel = -viewDir * sphereAccelUp;
+            }
+        } else if (movementInput.z == 1.0f) {
+            if (sphereOnGround()) {
+                spherePosAccel = viewDir * sphereAccel;
+            } else {
+                spherePosAccel = viewDir * sphereAccelUp;
+            }
+        } else {
+            spherePosAccel.x = 0.0f;
+            spherePosAccel.z = 0.0f;
+        }
+
+        // Space
+        if (fireInput && !sphereJumping) {
+            spherePosSpeed.y = sphereJump;
+            sphereGoingUp = true;
+            sphereJumping = true;
+        }
+
+        // E
+        if (rotationInput.z == -1.0f  && sphereOnGround()) {
+            // Checkpoint
+            if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0f) {
+                sphereCheckpoint = spherePos;
+            }
+            //Super Speed
+            if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0f) {
+                sphereAccel = sphereAccelSuper;
+                sphereAccelUp = sphereAccelUpSuper;
+                sphereJump = sphereJumpSuper;
+            }
+            // Super View
+            if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0f) {
+                viewDistance = viewDistanceSuper;
+                viewHeight = viewHeightSuper;
+            }
+            // Win
+            if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0f) {
+                textFinishIndex = 1;
+                sphereAccel = 0.0f;
+                sphereJump = 0.0f;
+                viewSpeed = 0.0f;
+            }
+            // Super Light
+            if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0f) {
+                ambientStrength = 0.5;
+                lightStatus.x = 1.0;
+            }
+            // Level 1
+            if (levelType[(int) spherePos.x][(int) spherePos.z] == 11.0f) {
+                appCurrent = LEVEL1;
+                glfwSetWindowShouldClose(window, GL_TRUE);
+            }
+            // Level 2
+            if (levelType[(int) spherePos.x][(int) spherePos.z] == 12.0f) {
+                appCurrent = LEVEL2;
+                glfwSetWindowShouldClose(window, GL_TRUE);
+            }
+        }
+    }
+
 
     void updateView() {
         // Compute the new view position
@@ -890,6 +900,7 @@ protected:
         viewMatrix = glm::lookAt(viewPos, spherePos, glm::vec3(0.0f, 1.0f, 0.0f));
         viewDir = glm::normalize(glm::vec3(glm::sin(viewAzimuth), glm::sin(viewElevation), glm::cos(viewAzimuth)));
     }
+
 
     void updateSphere(float deltaTime) {
         // Type check
@@ -988,13 +999,6 @@ protected:
         sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::mat4_cast(sphereRot);
     }
 
-    bool sphereOnGround() {
-        if (levelHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius == spherePos.y)
-            return true;
-        else
-            return false;
-    }
-
     void updateUBO(uint32_t currentImage) {
         // Sphere
         UBOm_Sphere.mvpMat = projectionViewMatrix * sphereMatrix;
@@ -1044,26 +1048,44 @@ protected:
         UBOm_Wall.mvpMat = projectionViewMatrix * UBOm_Wall.mMat;
         DS_Wall.map(currentImage, &UBOm_Wall, 0);
 
-        // Shader Lights
-        UBOp_ShaderLights.lightColor = glm::vec4(LCol, LInt);
-        UBOp_ShaderLights.lightPos =  spherePos;
-        UBOp_ShaderLights.viewPos = viewPos;
-        UBOp_ShaderLights.ambientStrength = ambientStrength;
-        UBOp_ShaderLights.specularStrength = specularStrength;
-        UBOp_ShaderLights.shininess = shininess;
-        UBOp_ShaderLights.lightStatus = lightStatus;
-        UBOp_ShaderLights.cosIn = cosIn;
-        UBOp_ShaderLights.cosOut = cosOut;
+        // Shaders
+        UBOp_Shaders.lightColor = glm::vec4(LCol, LInt);
+        UBOp_Shaders.lightPos =  spherePos;
+        UBOp_Shaders.viewPos = viewPos;
+        UBOp_Shaders.ambientStrength = ambientStrength;
+        UBOp_Shaders.specularStrength = specularStrength;
+        UBOp_Shaders.shininess = shininess;
+        UBOp_Shaders.lightStatus = lightStatus;
+        UBOp_Shaders.cosIn = cosIn;
+        UBOp_Shaders.cosOut = cosOut;
+        DS_Plane.map(currentImage, &UBOp_Shaders, 2);
+        DS_Border.map(currentImage, &UBOp_Shaders, 2);
+        DS_Wall.map(currentImage, &UBOp_Shaders, 2);
+        DS_Item.map(currentImage, &UBOp_Shaders, 2);
+        DS_Step.map(currentImage, &UBOp_Shaders, 2);
+        DS_Iron.map(currentImage, &UBOp_Shaders, 2);
+        DS_Decoration.map(currentImage, &UBOp_Shaders, 2);
+    }
 
-        DS_Plane.map(currentImage, &UBOp_ShaderLights, 2);
-        DS_Border.map(currentImage, &UBOp_ShaderLights, 2);
-        DS_Wall.map(currentImage, &UBOp_ShaderLights, 2);
-        DS_Item.map(currentImage, &UBOp_ShaderLights, 2);
-        DS_Step.map(currentImage, &UBOp_ShaderLights, 2);
-        DS_Iron.map(currentImage, &UBOp_ShaderLights, 2);
-        DS_Decoration.map(currentImage, &UBOp_ShaderLights, 2);
+
+    bool sphereOnGround() {
+        if (levelHeight[(int)spherePos.x][(int)spherePos.z] + sphereRadius == spherePos.y)
+            return true;
+        else
+            return false;
+    }
+
+
+    void appManage() {
+        if (appCurrent == MENU) {
+            appClosing = true;
+        } else {
+            appCurrent = MENU;
+        }
     }
 };
+
+
 
 class Menu : public Level {
 public:
@@ -1073,12 +1095,16 @@ public:
     }
 };
 
+
+
 class Level1 : public Level {
 public:
     Level1() {
         levelPathPrefix = "levels/level1/";
     }
 };
+
+
 
 class Level2 : public Level {
 public:
@@ -1087,22 +1113,22 @@ public:
     }
 };
 
+
+
 int main() {
     Level* app;
 
     try {
-        while (!closeApp) {
-            switch(currentScene){
+        while (!appClosing) {
+            switch (appCurrent) {
                 case MENU:
                     app = new Menu();
                     app->run();
                     break;
-
                 case LEVEL1:
                     app = new Level1();
                     app->run();
                     break;
-
                 case LEVEL2:
                     app = new Level2();
                     app->run();
