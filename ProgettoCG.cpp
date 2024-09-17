@@ -15,8 +15,6 @@ std::vector<SingleText> textMessage = {
     {2, {"", "E: SUPER SPEED", "",""}, 0, 0},
     {2, {"", "E: SUPER VIEW", "",""}, 0, 0},
     {2, {"", "E: WIN", "",""}, 0, 0},
-    {2, {"", "YOU WIN", "",""}, 0, 0},
-    {2, {"", "DONE!", "",""}, 0, 0},
     {2, {"", "E: LEVEL 1", "",""}, 0, 0},
     {2, {"", "E: LEVEL 2", "",""}, 0, 0}
 };
@@ -130,7 +128,7 @@ protected:
     static const int levelSize = 100;
     float levelHeight[levelSize][levelSize];
     float levelType[levelSize][levelSize];
-    const glm::vec3 levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
+    glm::vec3 levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
     std::string levelPathPrefix = "";
     std::string levelPathHeight = "jsons/Height.json";
     std::string levelPathType = "jsons/Type.json";
@@ -726,6 +724,8 @@ protected:
         bool fireInput = false;
         getSixAxis(deltaTime, movementInput, rotationInput, fireInput);
 
+        std::cout << viewPos.x << " " << viewPos.y << " " << viewPos.z << std::endl;
+
         /* Just for lights if needed
         if(glfwGetKey(window, GLFW_KEY_1)) {
             if(!debounce) {
@@ -906,10 +906,10 @@ protected:
             textMessageIndex = 4;
             RebuildPipeline();
         } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 11.0 && sphereOnGround()) {
-            textMessageIndex = 7;
+            textMessageIndex = 5;
             RebuildPipeline();
         } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 12.0 && sphereOnGround()) {
-            textMessageIndex = 8;
+            textMessageIndex = 6;
             RebuildPipeline();
         } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0 && sphereOnGround()) {
             spherePos = sphereCheckpoint;
@@ -1069,6 +1069,7 @@ class Menu : public Level {
 public:
     Menu() {
         levelPathPrefix = "levels/menu/";
+        levelStart = glm::vec3(10.0f, 0.0f, 10.0f);
     }
 };
 
