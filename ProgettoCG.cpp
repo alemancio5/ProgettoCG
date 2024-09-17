@@ -16,7 +16,9 @@ std::vector<SingleText> textMessage = {
     {2, {"", "E: SUPER VIEW", "",""}, 0, 0},
     {2, {"", "E: WIN", "",""}, 0, 0},
     {2, {"", "YOU WIN", "",""}, 0, 0},
-    {2, {"", "DONE!", "",""}, 0, 0}
+    {2, {"", "DONE!", "",""}, 0, 0},
+    {2, {"", "E: LEVEL 1", "",""}, 0, 0},
+    {2, {"", "E: LEVEL 2", "",""}, 0, 0}
 };
 std::vector<SingleText> textFinish = {
     {3, {"", "", "",""}, 0, 0},
@@ -809,11 +811,11 @@ protected:
             if(currentScene == MENU){
                 bool closeWindow = false;
                 switch((int)levelType[(int)spherePos.x][(int)spherePos.z]){
-                    case 1:
+                    case 11:
                         currentScene = LEVEL1;
                         closeWindow = true;
                         break;
-                    case 2:
+                    case 12:
                         currentScene = LEVEL2;
                         closeWindow = true;
                         break;
@@ -902,6 +904,12 @@ protected:
             RebuildPipeline();
         } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 4.0 && sphereOnGround()) {
             textMessageIndex = 4;
+            RebuildPipeline();
+        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 11.0 && sphereOnGround()) {
+            textMessageIndex = 7;
+            RebuildPipeline();
+        } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 12.0 && sphereOnGround()) {
+            textMessageIndex = 8;
             RebuildPipeline();
         } else if (levelType[(int)spherePos.x][(int)spherePos.z] == 5.0 && sphereOnGround()) {
             spherePos = sphereCheckpoint;
