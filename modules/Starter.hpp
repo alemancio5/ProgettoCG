@@ -1612,17 +1612,11 @@ std::cout << "Starting createInstance()\n"  << std::flush;
 		}
 	}
 
-    //#include "Menu.hpp" // Include del menu
-
     void mainLoop() {
         while (!glfwWindowShouldClose(window)){
             glfwPollEvents();
             drawFrame();
         }
-
-        // TODO - aggiungere
-        // glfwSetWindowCloseCallback(window, window_close_callback);
-        // checkCurrentScene();
 
         vkDeviceWaitIdle(device);
     }

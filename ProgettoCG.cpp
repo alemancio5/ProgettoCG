@@ -759,6 +759,9 @@ protected:
     }
 
     void updateUniformBuffer(uint32_t currentImage) override {
+        if(glfwWindowShouldClose(window)){
+            appManage();
+        }
         // Debounce
         static bool debounce = false;
         static int debounceCur = 0;
