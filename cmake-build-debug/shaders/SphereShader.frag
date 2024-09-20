@@ -1,0 +1,1 @@
+#version 450layout(location = 0) in vec2 fragUV;layout(set = 0, binding = 1) uniform sampler2D text;layout(binding = 2) uniform GreenLightsDiffusion {	float isGreen;} ubo;layout(location = 0) out vec4 outColor;void main() {	vec3 emit = ubo.isGreen == 1.0 ? vec3(0.0, 1.0, 0.0) : texture(text, fragUV).rgb;	outColor = vec4(emit, 1.0f);}

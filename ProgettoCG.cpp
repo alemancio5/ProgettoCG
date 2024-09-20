@@ -1,8 +1,8 @@
 #include <thread>
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
-
-
+#include <SFML/Audio.hpp>
+#include <atomic>
 
 // Text
 std::vector<SingleText> textLives = {
@@ -81,6 +81,11 @@ struct ShadersPUBO {
     alignas(4) float cosOut;
 };
 
+struct SpherePUBO {
+    alignas(4) float isGreen;
+};
+
+
 // Vertexes structs
 struct SphereVertex {
     glm::vec3 pos;
@@ -131,7 +136,26 @@ enum AppEnum {
 bool appClosing = false;
 AppEnum appCurrent = MENU;
 
+std::atomic<bool> soundDone(false);
 
+void playSound(const std::string& file) {
+    sf::SoundBuffer buffer;
+    if (!buffer.loadFromFile(file)) {
+        std::cerr << "Errore nel caricamento del file audio!" << std::endl;
+    }
+
+    sf::Sound sound;
+    sound.setBuffer(buffer);
+    sound.play();
+
+    // Mantieni il programma in esecuzione finché il suono non finisce
+    while (sound.getStatus() == sf::Sound::Playing) {
+        // Aggiungi un piccolo delay per non sovraccaricare la CPU
+        sf::sleep(sf::milliseconds(100));
+    }
+
+    soundDone.store(false);
+}
 
 class Level : public BaseProject {
 protected:
@@ -161,6 +185,7 @@ protected:
     Texture T_Sphere{};
     DescriptorSet DS_Sphere;
     SphereMUBO UBOm_Sphere{};
+    SpherePUBO UBOp_Sphere;
     bool sphereJumping = false;
     bool sphereGoingUp = false;
     int sphereLives = 3;
@@ -182,8 +207,8 @@ protected:
     glm::quat sphereRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotSpeed = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 sphereRotAccel = glm::vec3(0.0f, 0.0f, 0.0f);
-    std::string spherePathVert = "shaders/EmissionVert.spv";
-    std::string spherePathFrag = "shaders/EmissionFrag.spv";
+    std::string spherePathVert = "shaders/SphereVert.spv";
+    std::string spherePathFrag = "shaders/SphereFrag.spv";
     std::string spherePathModel = "models/Sphere.obj";
     std::string spherePathTexture = "textures/Sphere.jpg";
 
@@ -210,8 +235,8 @@ protected:
     ItemMUBO UBOm_Item{};
     int itemCur = 0;
     int itemOld = 0;
-    std::string itemPathVert = "shaders/EmissionVert.spv";
-    std::string itemPathFrag = "shaders/EmissionFrag.spv";
+    std::string itemPathVert = "shaders/ItemVert.spv";
+    std::string itemPathFrag = "shaders/ItemFrag.spv";
     std::string itemPathModel = "models/Item.obj";
     std::string itemPathTexture = "textures/Item.jpg";
 
@@ -310,9 +335,12 @@ protected:
     float ambientStrength = 10.0f;
     float specularStrength = 0.1f;
     float shininess = 10.0f;
-    float cosIn = glm::cos(0.4f);
-    float cosOut = glm::cos(0.5f);
+    float cosIn = glm::cos(0.1f);
+    float cosOut = glm::cos(0.2f);
 
+    // Shpere Shader for Items
+    float isGreen = 0.0;
+    std::vector<glm::vec4> typeTaken;
 
     void setWindowParameters() override {
         windowWidth = 800;
@@ -341,7 +369,8 @@ protected:
         // Sphere
         DSL_Sphere.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(SphereMUBO), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SpherePUBO), 1}
         });
         VD_Sphere.init(this, {
             {0, sizeof(SphereVertex), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -476,7 +505,7 @@ protected:
         T_Wall.init(this, levelPathPrefix + wallPathTexture);
 
         // Others
-        DPSZs.uniformBlocksInPool = 15;
+        DPSZs.uniformBlocksInPool = 16;
         DPSZs.texturesInPool = 11;
         DPSZs.setsInPool = 11;
     }
@@ -514,6 +543,10 @@ protected:
                 for (int j = jStart; j < jEnd; j++) {
                     levelType[i][j] = type;
                 }
+            }
+
+            if(type == 1.0 || type == 2.0 || type == 3.0 || type == 4.0 || type == 6.0){
+                typeTaken.push_back(glm::vec4(iStart+1, jStart+1, type, 0.0));
             }
         }
     }
@@ -753,7 +786,6 @@ protected:
 
 
     void getInputs(float deltaTime, glm::vec3 &movementInput, glm::vec3 &rotationInput, bool &fireInput) {
-        // Just for lights control in development phase
         /*
         if (glfwGetKey(window, GLFW_KEY_1)) {
             if (!debounce) {
@@ -763,30 +795,6 @@ protected:
             }
         } else {
             if ((curDebounce == GLFW_KEY_1) && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }
-        }
-        if (glfwGetKey(window, GLFW_KEY_2)) {
-            if (!debounce) {
-                debounce = true;
-                curDebounce = GLFW_KEY_2;
-                lightStatus.y = 1 - lightStatus.y;
-            }
-        } else {
-            if ((curDebounce == GLFW_KEY_2) && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }
-        }
-        if (glfwGetKey(window, GLFW_KEY_3)) {
-            if (!debounce) {
-                debounce = true;
-                curDebounce = GLFW_KEY_3;
-                lightStatus.z = 1 - lightStatus.z;
-            }
-        } else {
-            if ((curDebounce == GLFW_KEY_3) && debounce) {
                 debounce = false;
                 curDebounce = 0;
             }
@@ -842,6 +850,11 @@ protected:
             spherePosSpeed.y = sphereJump;
             sphereGoingUp = true;
             sphereJumping = true;
+            if (!soundDone.load() && sphereJump > 0.0) {
+                soundDone.store(true);
+                std::thread threadSoundEffect(playSound, "sound_effects/Jump.wav");
+                threadSoundEffect.detach();
+            }
         }
 
         // E
@@ -851,6 +864,7 @@ protected:
                 textFinishIndex = 3;
                 RebuildPipeline();
                 sphereCheckpoint = spherePos;
+                takeItem(1.0);
             }
             //Super Speed
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0f) {
@@ -859,6 +873,7 @@ protected:
                 sphereAccel = sphereAccelSuper;
                 sphereAccelUp = sphereAccelUpSuper;
                 sphereJump = sphereJumpSuper;
+                takeItem(2.0);
             }
             // Super View
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0f) {
@@ -866,35 +881,67 @@ protected:
                 RebuildPipeline();
                 viewDistance = viewDistanceSuper;
                 viewHeight = viewHeightSuper;
+                takeItem(3.0);
             }
             // Win
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0f) {
                 textFinishIndex = 1;
                 RebuildPipeline();
+
                 sphereAccel = 0.0f;
                 sphereJump = 0.0f;
                 viewSpeed = 0.0f;
+
+                takeItem(4.0);
+
+                if (!soundDone.load()) {
+                    soundDone.store(true);
+                    std::thread threadSoundEffect(playSound, "sound_effects/Win.wav");
+                    threadSoundEffect.detach();
+                }
             }
             // Super Light
             if (levelType[(int)spherePos.x][(int)spherePos.z] == 6.0f) {
-                textFinishIndex = 3;
-                RebuildPipeline();
+                //textFinishIndex = 3;
+                //RebuildPipeline();
                 ambientStrength = 0.5;
                 lightStatus.x = 1.0;
+                takeItem(6.0);
             }
             // Level 1
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 11.0f) {
+                isGreen = 1-isGreen;
                 appCurrent = LEVEL1;
                 glfwSetWindowShouldClose(window, GL_TRUE);
             }
             // Level 2
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 12.0f) {
+                isGreen = 1-isGreen;
                 appCurrent = LEVEL2;
                 glfwSetWindowShouldClose(window, GL_TRUE);
             }
         }
     }
 
+    void takeItem(float itemType) {
+        for(int i = 0; i < typeTaken.size(); i++) {
+            if(typeTaken[i].z == itemType){
+                if((spherePos.x >= typeTaken[i].x-1 && spherePos.x <= typeTaken[i].x+1) && (spherePos.z >= typeTaken[i].y-1 && spherePos.z <= typeTaken[i].y+1)){
+                    if(typeTaken[i].w == 0.0){
+                        typeTaken[i].w = 1.0;
+                        isGreen = 1.0;
+                        if(typeTaken[i].z == 2.0 || typeTaken[i].z == 3.0 || typeTaken[i].z == 6.0) {
+                            if (!soundDone.load()) {
+                                soundDone.store(true);
+                                std::thread threadSoundEffect(playSound, "sound_effects/PowerUp.wav");
+                                threadSoundEffect.detach();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     void updateView() {
         // Compute the new view position
@@ -982,18 +1029,24 @@ protected:
             if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0 && sphereOnGround()) {
                 itemCur = 1;
                 textMessageIndex = 1;
+                itemTaken(1.0);
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0 && sphereOnGround()) {
                 itemCur = 2;
                 textMessageIndex = 2;
+                itemTaken(2.0);
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0 && sphereOnGround()) {
                 itemCur = 3;
                 textMessageIndex = 3;
+                itemTaken(3.0);
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0 && sphereOnGround()) {
                 itemCur = 4;
-                textMessageIndex = 4;
+                textMessageIndex = 5;
+                // TODO: Questo è il WIN -> Aggiungere audio e poi timer 5 secondi poi chiusura
+                itemTaken(4.0);
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 6.0 && sphereOnGround()) {
                 itemCur = 6;
-                textMessageIndex = 5;
+                textMessageIndex = 4;
+                itemTaken(6.0);
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 11.0 && sphereOnGround()) {
                 itemCur = 11;
                 textMessageIndex = 6;
@@ -1001,26 +1054,61 @@ protected:
                 itemCur = 12;
                 textMessageIndex = 7;
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 5.0 && sphereOnGround()) {
-                itemCur = 5;
-                spherePos = sphereCheckpoint;
-                sphereLives--;
-                if (sphereLives == 0) {
+                if(sphereLives > 0.0) {
+                    itemCur = 5;
+                    spherePos = sphereCheckpoint;
+                    sphereLives--;
+                } else {
                     textFinishIndex = 2;
-                    sphereAccel = 0.0f;
-                    sphereJump = 0.0f;
-                    viewSpeed = 0.0f;
                 }
+                isGreen = 0.0;
             } else {
                 itemCur = 0;
                 textMessageIndex = 0;
-                textFinishIndex = 0;
+                if(sphereLives == 0.0){
+                    textFinishIndex = 2;
+                } else {
+                    textFinishIndex = 0;
+                }
+                isGreen = 0.0;
             }
+
+            if (sphereLives == 0) {
+                if (!soundDone.load() && sphereJump > 0.0) {
+                    textFinishIndex = 2;
+                    RebuildPipeline();
+                    soundDone.store(true);
+                    std::thread threadSoundEffect(playSound, "sound_effects/GameOver.wav");
+                    threadSoundEffect.detach();
+                }
+                sphereAccel = 0.0f;
+                sphereJump = 0.0f;
+                viewSpeed = 0.0f;
+            }
+
             if (itemCur != itemOld) {
                 RebuildPipeline();
             }
 
             // Update matrix
             sphereMatrix = glm::translate(glm::mat4(1.0f), spherePos) * glm::mat4_cast(sphereRot);
+        }
+    }
+
+    void itemTaken (float itemType) {
+        for(int i = 0; i < typeTaken.size(); i++) {
+            if(typeTaken[i].z == itemType){
+                if((spherePos.x >= typeTaken[i].x-1 && spherePos.x <= typeTaken[i].x+1) && (spherePos.z >= typeTaken[i].y-1 && spherePos.z <= typeTaken[i].y+1)){
+                    if(typeTaken[i].w == 1.0){
+                        isGreen = 1.0;
+                        if(typeTaken[i].z != 4.0){
+                            textFinishIndex = 3;
+                        }
+                    } else {
+                        isGreen = 0.0;
+                    }
+                }
+            }
         }
     }
 
@@ -1031,6 +1119,9 @@ protected:
         UBOm_Sphere.mMat = sphereMatrix;
         UBOm_Sphere.nMat = glm::mat4(1.0f);
         DS_Sphere.map(currentImage, &UBOm_Sphere, 0);
+
+        UBOp_Sphere.isGreen = isGreen;
+        DS_Sphere.map(currentImage, &UBOp_Sphere, 2);
 
         // Plane
         UBOm_Plane.mvpMat = projectionViewMatrix;
@@ -1087,10 +1178,11 @@ protected:
         DS_Plane.map(currentImage, &UBOp_Shaders, 2);
         DS_Border.map(currentImage, &UBOp_Shaders, 2);
         DS_Wall.map(currentImage, &UBOp_Shaders, 2);
-        DS_Item.map(currentImage, &UBOp_Shaders, 2);
         DS_Step.map(currentImage, &UBOp_Shaders, 2);
         DS_Iron.map(currentImage, &UBOp_Shaders, 2);
         DS_Decoration.map(currentImage, &UBOp_Shaders, 2);
+
+        DS_Item.map(currentImage, &UBOp_Shaders, 2);
     }
 
 
@@ -1154,9 +1246,7 @@ public:
     }
 };
 
-
-
-int main() {
+int main(int argc, char* argv[]) {
     Level* app;
 
     try {

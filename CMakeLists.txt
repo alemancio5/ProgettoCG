@@ -1,30 +1,36 @@
-set($ENV{VULKAN_SDK} "/Library/CLion/VulkanSDK/1.3.275.0/macOS")
-set(GLFW "/Library/CLion/VulkanSDK/libs/glfw-3.4.bin.MACOS")
-set(GLM "/Library/CLion/VulkanSDK/libs/glm")
+#########################################################
+# Variables #
+# Set them to match your SDK and libraries installation #
+#########################################################
+set($ENV{VULKAN_SDK} "C:/VulkanSDK/1.3.275.0") # Vulkan SDK
+set(GLFW "C:/VulkanSDK/libs/glfw-3.3.9.bin.WIN64") # GLFW
+set(GLM "C:/VulkanSDK/libs/glm") # GLM
+set(SFML "C:/VulkanSDK/libs/SFML-2.6.1") # SDL
+# List of directories to add to the include path:
+# all headers in these directories can be included in the source code
+# (Vulkan headers must be omitted from here)
+list(APPEND INCLUDE_DIRS "${GLFW}/include" ${GLM} "${SFML}/include" headers)
+# List of libraries to link to the executable:
+# all these libraries will be linked to the compiled executable
+# (Vulkan library must be omitted from here)
+list(APPEND LINK_LIBS "${GLFW}/lib-mingw-w64/libglfw3.a" "${SFML}/lib/libsfml-audio.a" "${SFML}/lib/libsfml-system.a")
+# Name of the project, will be used as the target name for CMake build
+# and will be the name of the executable
+set(PROJ_NAME ProgettoCG)
+# Name of the source file containing the main() function
 set(MAIN ProgettoCG.cpp)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo")
-
-list(APPEND INCLUDE_DIRS "${GLFW}/include" ${GLM} headers)
-list(APPEND LINK_LIBS "${GLFW}/lib-arm64/libglfw3.a")
-
+#########################################################
+# CMake configuration #
+# You shouldn't need to modify anything past this point #
+#########################################################
 cmake_minimum_required(VERSION 3.24)
-
-project(ProgettoCG)
-
-add_executable(ProgettoCG ProgettoCG.cpp)
-
+project(${PROJ_NAME} LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+add_executable(${PROJECT_NAME} ${MAIN})
 find_package(Vulkan REQUIRED)
-
 foreach(dir IN LISTS Vulkan_INCLUDE_DIR INCLUDE_DIRS)
     target_include_directories(${PROJECT_NAME} PUBLIC ${dir})
 endforeach()
-
 foreach(lib IN LISTS Vulkan_LIBRARIES LINK_LIBS)
     target_link_libraries(${PROJECT_NAME} ${lib})
 endforeach()
-
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/modules DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/textures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-

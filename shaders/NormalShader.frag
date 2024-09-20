@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec2 fragUV;
 layout(location = 1) in vec3 fragPos;
-layout(location = 2) in vec3 fragNormal;
+layout(location = 2) in vec3 fragNorm;
 
 layout(binding = 1) uniform sampler2D texSampler;
 
@@ -25,7 +25,7 @@ layout(location = 0) out vec4 outColor;
 void main() {
     // INIZIALIZZAZIONI UTILI
     // Normalizzazione della normale
-    vec3 norm = normalize(fragNormal);
+    vec3 norm = normalize(fragNorm);
     // Eye direction
     vec3 viewDir = normalize(LDubo.viewPos - fragPos);
     // Sample the texture using UV coordinates
