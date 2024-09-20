@@ -510,8 +510,11 @@ protected:
         DPSZs.setsInPool = 11;
     }
 
+    std::chrono::steady_clock::time_point start_time;
 
     void levelInit() {
+        start_time = std::chrono::steady_clock::now();
+
         // Height initialization
         std::ifstream heightJsonFile(levelPathPrefix + levelPathHeight);
         nlohmann::json heightJson;
@@ -755,7 +758,6 @@ protected:
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Wall.indices.size()), 1, 0, 0, 0);
     }
 
-
     void updateUniformBuffer(uint32_t currentImage) override {
         // Debounce
         static bool debounce = false;
@@ -888,17 +890,21 @@ protected:
                 textFinishIndex = 1;
                 RebuildPipeline();
 
-                sphereAccel = 0.0f;
-                sphereJump = 0.0f;
-                viewSpeed = 0.0f;
-
                 takeItem(4.0);
 
-                if (!soundDone.load()) {
+                if (!soundDone.load() && sphereJump > 0.0) {
+                    auto end_time = std::chrono::steady_clock::now();
+                    std::chrono::duration<double> tempo_trascorso = end_time - start_time;
+                    std::cout << "Tempo impiegato: " << tempo_trascorso.count() << " secondi" << std::endl;
+
                     soundDone.store(true);
                     std::thread threadSoundEffect(playSound, "sound_effects/Win.wav");
                     threadSoundEffect.detach();
                 }
+
+                sphereAccel = 0.0f;
+                sphereJump = 0.0f;
+                viewSpeed = 0.0f;
             }
             // Super Light
             if (levelType[(int)spherePos.x][(int)spherePos.z] == 6.0f) {
