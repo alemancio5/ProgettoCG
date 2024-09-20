@@ -680,6 +680,13 @@ std::cout << "Starting createInstance()\n"  << std::flush;
 		std::cout << "Physical devices found: " << deviceCount << "\n";
 		
 		for (const auto& device : devices) {
+            // Ottenere le proprietà del dispositivo fisico
+            VkPhysicalDeviceProperties deviceProperties;
+            vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+            // Stampare il nome del dispositivo fisico
+            std::cout << "Device Name: " << deviceProperties.deviceName << "\n";
+
 			if(checkIfItHasDeviceExtension(device, "VK_KHR_portability_subset")) {
 				deviceExtensions.push_back("VK_KHR_portability_subset");
 			}
