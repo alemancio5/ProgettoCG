@@ -34,7 +34,8 @@ std::vector<SingleText> textLives = {
     {1, {"LIVES: 0", "", "",""}, 0, 0},
     {1, {"LIVES: 1", "", "",""}, 0, 0},
     {1, {"LIVES: 2", "", "",""}, 0, 0},
-    {1, {"LIVES: 3", "","",""}, 0, 0}
+    {1, {"LIVES: 3", "","",""}, 0, 0},
+    {1, {"CHOOSE A LEVEL", "", "",""}, 0, 0}
 };
 std::vector<SingleText> textMessage = {
     {2, {"", "", "",""}, 0, 0},
@@ -508,7 +509,7 @@ protected:
             {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ShadersPUBO), 1},
         });
         VD_Wall.init(this, {
-            {0, sizeof(BorderVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+            {0, sizeof(WallVertex), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(WallVertex, pos),  sizeof(glm::vec3), POSITION},
             {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(WallVertex, uv),      sizeof(glm::vec2), UV},
@@ -604,7 +605,7 @@ protected:
 
         // Wall
         P_Wall.create();
-        DS_Wall.init(this, &DSL_Border, {&T_Border});
+        DS_Wall.init(this, &DSL_Wall, {&T_Wall});
     }
 
 
@@ -1036,7 +1037,7 @@ protected:
                 itemCur = 12;
                 textMessageIndex = 7;
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 5.0 && sphereOnGround()) {
-                if (sphereLives > 0.0) {
+                if (sphereLives > 0) {
                     itemCur = 5;
                     spherePos = sphereCheckpoint;
                     sphereLives--;
@@ -1060,7 +1061,6 @@ protected:
                 sphereStop();
                 levelEnded = true;
                 textFinishIndex = 2;
-                RebuildPipeline();
             }
             if (itemCur != itemOld) {
                 RebuildPipeline();
@@ -1219,8 +1219,8 @@ public:
         levelStart = glm::vec3(6.0f, 0.0f, 10.0f);
         levelPathPrefix = "levels/menu/";
         levelName = "Labyball - Menu";
-        levelSoundtrack = "sounds/Level1.wav";
-
+        levelSoundtrack = "sounds/Menu.wav";
+        sphereLives = 4;
     }
 };
 
