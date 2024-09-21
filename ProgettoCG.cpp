@@ -1,8 +1,33 @@
 #include <thread>
+#include <atomic>
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
 #include <SFML/Audio.hpp>
-#include <atomic>
+
+
+
+// Sound
+std::atomic<bool> soundStop(false);
+void playSound(const std::string& file, std::string type) {
+    // Load the sound
+    sf::SoundBuffer buffer;
+    if (!buffer.loadFromFile(file)) {
+        std::cerr << "Error loading audio!" << std::endl;
+    }
+
+    // Make sure the sound is not played again
+    sf::Sound sound;
+    sound.setBuffer(buffer);
+    sound.play();
+    while (sound.getStatus() == sf::Sound::Playing) {
+        if (soundStop.load() && type == "soundtrack") {
+            sound.stop();
+            break;
+        }
+        sf::sleep(sf::milliseconds(10));
+    }
+    soundStop.store(false);
+}
 
 // Text
 std::vector<SingleText> textLives = {
@@ -136,35 +161,6 @@ enum AppEnum {
 bool appClosing = false;
 AppEnum appCurrent = MENU;
 
-std::atomic<bool> soundDone(false);
-std::atomic<bool> stopMusic(false);
-
-void playSound(const std::string& file, std::string type) {
-    sf::SoundBuffer buffer;
-    if (!buffer.loadFromFile(file)) {
-        std::cerr << "Errore nel caricamento del file audio!" << std::endl;
-    }
-
-    sf::Sound sound;
-    sound.setBuffer(buffer);
-    sound.play();
-
-    // Mantieni il programma in esecuzione finché il suono non finisce
-    while (sound.getStatus() == sf::Sound::Playing) {
-        if (stopMusic.load() && type == "soundtrack") {
-            sound.stop();  // Ferma il suono se stopMusic è true
-            break;         // Esci dal ciclo
-        }
-        // Aggiungi un piccolo delay per non sovraccaricare la CPU
-        sf::sleep(sf::milliseconds(100));
-    }
-
-    stopMusic.store(false);
-    if(type == " "){
-        soundDone.store(false);
-    }
-}
-
 class Level : public BaseProject {
 protected:
 
@@ -179,14 +175,15 @@ protected:
     static const int levelSize = 100;
     float levelHeight[levelSize][levelSize];
     float levelType[levelSize][levelSize];
+    bool levelEnded = false;
     glm::vec3 levelStart;
     std::string levelName;
-    std::string mainSoundtrack;
+    std::string levelSoundtrack;
     std::string levelPathPrefix = "";
     std::string levelPathHeight = "jsons/Height.json";
     std::string levelPathType = "jsons/Type.json";
 
-    std::chrono::steady_clock::time_point start_time;
+    std::chrono::steady_clock::time_point levelStartTime;
     bool soundtrack = true;
 
 
@@ -352,8 +349,8 @@ protected:
     float cosOut = glm::cos(0.2f);
 
     // Shpere Shader for Items
-    float isGreen = 0.0;
-    std::vector<glm::vec4> typeTaken;
+    float itemIsGreen = 0.0;
+    std::vector<glm::vec4> itemList;
 
     void setWindowParameters() override {
         windowWidth = 800;
@@ -371,6 +368,10 @@ protected:
 
 
     void localInit() override {
+        // Sound
+        std::thread threadMainSoundtrack(playSound, levelSoundtrack, "soundtrack");
+        threadMainSoundtrack.detach();
+
         // Text
         textLivesBanner.init(this, &textLives);
         textMessageBanner.init(this, &textMessage);
@@ -525,7 +526,7 @@ protected:
 
 
     void levelInit() {
-        start_time = std::chrono::steady_clock::now();
+        levelStartTime = std::chrono::steady_clock::now();
 
         // Height initialization
         std::ifstream heightJsonFile(levelPathPrefix + levelPathHeight);
@@ -560,8 +561,8 @@ protected:
                 }
             }
 
-            if(type == 1.0 || type == 2.0 || type == 3.0 || type == 4.0 || type == 6.0){
-                typeTaken.push_back(glm::vec4(iStart+1, jStart+1, type, 0.0));
+            if (type == 1.0 || type == 2.0 || type == 3.0 || type == 4.0 || type == 6.0) {
+                itemList.push_back(glm::vec4(iStart + 1, jStart + 1, type, 0.0));
             }
         }
     }
@@ -771,18 +772,6 @@ protected:
     }
 
     void updateUniformBuffer(uint32_t currentImage) override {
-        // Check if the windos has been closed by pressing X
-        if(glfwWindowShouldClose(window)){
-            appManage();
-        }
-
-        // Start main soundtrack
-        if(appCurrent != MENU && soundtrack) {
-            std::thread threadMainSoundtrack(playSound, mainSoundtrack, "soundtrack");
-            threadMainSoundtrack.detach();
-            soundtrack = false;
-        }
-
         // Debounce
         static bool debounce = false;
         static int debounceCur = 0;
@@ -812,149 +801,126 @@ protected:
 
 
     void getInputs(float deltaTime, glm::vec3 &movementInput, glm::vec3 &rotationInput, bool &fireInput) {
+        // Check if the window has been closed by clicking X
+        if (glfwWindowShouldClose(window)) {
+            appManage();
+            soundStop.store(true);
+        }
+
         // Esc
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             appManage();
+            soundStop.store(true);
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
 
-        // Left and right
-        if (movementInput.x == -1.0f || rotationInput.y == -1.0f) {
-            if (!viewPosLock.x)
-                viewAzimuth += viewSpeed * deltaTime;
-        } else if (movementInput.x == 1.0f || rotationInput.y == 1.0f) {
-            if (!viewPosLock.z)
-                viewAzimuth -= viewSpeed * deltaTime;
-        }
-
-        // Up and down
-        if (rotationInput.x == -1.0f) {
-            viewElevation += viewSpeed * deltaTime;
-            if (viewElevation > viewElevationMax)
-                viewElevation = viewElevationMax;
-        } else if (rotationInput.x == 1.0f) {
-            viewElevation -= viewSpeed * deltaTime;
-            if (viewElevation < viewElevationMin)
-                viewElevation = viewElevationMin;
-        }
-
-        // W and S
-        if (movementInput.z == -1.0f) {
-            if (sphereOnGround()) {
-                spherePosAccel = -viewDir * sphereAccel;
-            } else {
-                spherePosAccel = -viewDir * sphereAccelUp;
+        if (!levelEnded) {
+            // Left and right
+            if (movementInput.x == -1.0f || rotationInput.y == -1.0f) {
+                if (!viewPosLock.x)
+                    viewAzimuth += viewSpeed * deltaTime;
+            } else if (movementInput.x == 1.0f || rotationInput.y == 1.0f) {
+                if (!viewPosLock.z)
+                    viewAzimuth -= viewSpeed * deltaTime;
             }
-        } else if (movementInput.z == 1.0f) {
-            if (sphereOnGround()) {
-                spherePosAccel = viewDir * sphereAccel;
-            } else {
-                spherePosAccel = viewDir * sphereAccelUp;
-            }
-        } else {
-            spherePosAccel.x = 0.0f;
-            spherePosAccel.z = 0.0f;
-        }
 
-        // Space
-        if (fireInput && !sphereJumping) {
-            spherePosSpeed.y = sphereJump;
-            sphereGoingUp = true;
-            sphereJumping = true;
-            if (!soundDone.load() && sphereJump > 0.0) {
-                soundDone.store(true);
-                std::thread threadSoundEffect(playSound, "sounds/Jump.wav", " ");
+            // Up and down
+            if (rotationInput.x == -1.0f) {
+                viewElevation += viewSpeed * deltaTime;
+                if (viewElevation > viewElevationMax)
+                    viewElevation = viewElevationMax;
+            } else if (rotationInput.x == 1.0f) {
+                viewElevation -= viewSpeed * deltaTime;
+                if (viewElevation < viewElevationMin)
+                    viewElevation = viewElevationMin;
+            }
+
+            // W and S
+            if (movementInput.z == -1.0f) {
+                if (sphereOnGround()) {
+                    spherePosAccel = -viewDir * sphereAccel;
+                } else {
+                    spherePosAccel = -viewDir * sphereAccelUp;
+                }
+            } else if (movementInput.z == 1.0f) {
+                if (sphereOnGround()) {
+                    spherePosAccel = viewDir * sphereAccel;
+                } else {
+                    spherePosAccel = viewDir * sphereAccelUp;
+                }
+            } else {
+                spherePosAccel.x = 0.0f;
+                spherePosAccel.z = 0.0f;
+            }
+
+            // Space
+            if (fireInput && !sphereJumping) {
+                spherePosSpeed.y = sphereJump;
+                sphereGoingUp = true;
+                sphereJumping = true;
+                std::thread threadSoundEffect(playSound, "sounds/Jump.wav", "others");
                 threadSoundEffect.detach();
             }
-        }
 
-        // E
-        if (rotationInput.z == -1.0f  && sphereOnGround()) {
-            // Checkpoint
-            if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0f) {
-                textFinishIndex = 3;
-                RebuildPipeline();
-                sphereCheckpoint = spherePos;
-                takeItem(1.0);
-            }
-            //Super Speed
-            if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0f) {
-                textFinishIndex = 3;
-                RebuildPipeline();
-                sphereAccel = sphereAccelSuper;
-                sphereAccelUp = sphereAccelUpSuper;
-                sphereJump = sphereJumpSuper;
-                takeItem(2.0);
-            }
-            // Super View
-            if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0f) {
-                textFinishIndex = 3;
-                RebuildPipeline();
-                viewDistance = viewDistanceSuper;
-                viewHeight = viewHeightSuper;
-                takeItem(3.0);
-            }
-            // Win
-            if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0f) {
-                stopMusic.store(true);
-
-                textFinishIndex = 1;
-                RebuildPipeline();
-
-                takeItem(4.0);
-
-                if (!soundDone.load() && sphereJump > 0.0) {
-                    auto end_time = std::chrono::steady_clock::now();
-                    std::chrono::duration<double> tempo_trascorso = end_time - start_time;
-                    std::cout << "Tempo impiegato: " << tempo_trascorso.count() << " secondi" << std::endl;
-
-                    soundDone.store(true);
-                    std::thread threadSoundEffect(playSound, "sounds/Win.wav", " ");
+            // E
+            if (rotationInput.z == -1.0f && sphereOnGround()) {
+                // Checkpoint
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0f) {
+                    textFinishIndex = 3;
+                    RebuildPipeline();
+                    sphereCheckpoint = spherePos;
+                    itemTake(1.0);
+                }
+                // Super Speed
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0f) {
+                    textFinishIndex = 3;
+                    RebuildPipeline();
+                    sphereAccel = sphereAccelSuper;
+                    sphereAccelUp = sphereAccelUpSuper;
+                    sphereJump = sphereJumpSuper;
+                    itemTake(2.0);
+                }
+                // Super View
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0f) {
+                    textFinishIndex = 3;
+                    RebuildPipeline();
+                    viewDistance = viewDistanceSuper;
+                    viewHeight = viewHeightSuper;
+                    itemTake(3.0);
+                }
+                // Win
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0f) {
+                    sphereStop();
+                    levelEnded = true;
+                    textFinishIndex = 1;
+                    RebuildPipeline();
+                    itemTake(4.0);
+                    std::thread threadSoundEffect(playSound, "sounds/Win.wav", "others");
                     threadSoundEffect.detach();
                 }
-
-                sphereAccel = 0.0f;
-                sphereJump = 0.0f;
-                viewSpeed = 0.0f;
-            }
-            // Super Light
-            if (levelType[(int)spherePos.x][(int)spherePos.z] == 6.0f) {
-                //textFinishIndex = 3;
-                //RebuildPipeline();
-                ambientStrength = 0.5;
-                lightStatus.x = 1.0;
-                takeItem(6.0);
-            }
-            // Level 1
-            if (levelType[(int) spherePos.x][(int) spherePos.z] == 11.0f) {
-                isGreen = 1-isGreen;
-                appCurrent = LEVEL1;
-                glfwSetWindowShouldClose(window, GL_TRUE);
-            }
-            // Level 2
-            if (levelType[(int) spherePos.x][(int) spherePos.z] == 12.0f) {
-                isGreen = 1-isGreen;
-                appCurrent = LEVEL2;
-                glfwSetWindowShouldClose(window, GL_TRUE);
-            }
-        }
-    }
-
-    void takeItem(float itemType) {
-        for(int i = 0; i < typeTaken.size(); i++) {
-            if(typeTaken[i].z == itemType){
-                if((spherePos.x >= typeTaken[i].x-1 && spherePos.x <= typeTaken[i].x+1) && (spherePos.z >= typeTaken[i].y-1 && spherePos.z <= typeTaken[i].y+1)){
-                    if(typeTaken[i].w == 0.0){
-                        typeTaken[i].w = 1.0;
-                        isGreen = 1.0;
-                        if(typeTaken[i].z == 2.0 || typeTaken[i].z == 3.0 || typeTaken[i].z == 6.0) {
-                            if (!soundDone.load()) {
-                                soundDone.store(true);
-                                std::thread threadSoundEffect(playSound, "sounds/Item.wav", " ");
-                                threadSoundEffect.detach();
-                            }
-                        }
-                    }
+                // Super Light
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 6.0f) {
+                    textFinishIndex = 3;
+                    RebuildPipeline();
+                    ambientStrength = 0.5;
+                    lightStatus.x = 1.0;
+                    itemTake(6.0);
+                }
+                // Level 1
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 11.0f) {
+                    levelEnded = true;
+                    itemIsGreen = 1 - itemIsGreen;
+                    soundStop.store(true);
+                    appCurrent = LEVEL1;
+                    glfwSetWindowShouldClose(window, GL_TRUE);
+                }
+                // Level 2
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == 12.0f) {
+                    levelEnded = true;
+                    itemIsGreen = 1 - itemIsGreen;
+                    soundStop.store(true);
+                    appCurrent = LEVEL2;
+                    glfwSetWindowShouldClose(window, GL_TRUE);
                 }
             }
         }
@@ -1058,7 +1024,6 @@ protected:
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0 && sphereOnGround()) {
                 itemCur = 4;
                 textMessageIndex = 5;
-                // TODO: Questo è il WIN -> Aggiungere audio e poi timer 5 secondi poi chiusura
                 itemTaken(4.0);
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 6.0 && sphereOnGround()) {
                 itemCur = 6;
@@ -1071,40 +1036,32 @@ protected:
                 itemCur = 12;
                 textMessageIndex = 7;
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 5.0 && sphereOnGround()) {
-                if(sphereLives > 0.0) {
+                if (sphereLives > 0.0) {
                     itemCur = 5;
                     spherePos = sphereCheckpoint;
                     sphereLives--;
+                    std::thread threadSoundEffect(playSound, "sounds/Hit.wav", " ");
+                    threadSoundEffect.detach();
                 } else {
                     textFinishIndex = 2;
                 }
-                isGreen = 0.0;
+                itemIsGreen = 0.0;
             } else {
                 itemCur = 0;
                 textMessageIndex = 0;
-                if(sphereLives == 0.0){
+                if (sphereLives == 0.0){
                     textFinishIndex = 2;
                 } else {
                     textFinishIndex = 0;
                 }
-                isGreen = 0.0;
+                itemIsGreen = 0.0;
             }
-
             if (sphereLives == 0) {
-                stopMusic.store(true);
-
-                if (!soundDone.load() && sphereJump > 0.0) {
-                    textFinishIndex = 2;
-                    RebuildPipeline();
-                    soundDone.store(true);
-                    std::thread threadSoundEffect(playSound, "sounds/Over.wav", " ");
-                    threadSoundEffect.detach();
-                }
-                sphereAccel = 0.0f;
-                sphereJump = 0.0f;
-                viewSpeed = 0.0f;
+                sphereStop();
+                levelEnded = true;
+                textFinishIndex = 2;
+                RebuildPipeline();
             }
-
             if (itemCur != itemOld) {
                 RebuildPipeline();
             }
@@ -1115,16 +1072,33 @@ protected:
     }
 
     void itemTaken (float itemType) {
-        for(int i = 0; i < typeTaken.size(); i++) {
-            if(typeTaken[i].z == itemType){
-                if((spherePos.x >= typeTaken[i].x-1 && spherePos.x <= typeTaken[i].x+1) && (spherePos.z >= typeTaken[i].y-1 && spherePos.z <= typeTaken[i].y+1)){
-                    if(typeTaken[i].w == 1.0){
-                        isGreen = 1.0;
-                        if(typeTaken[i].z != 4.0){
+        for(int i = 0; i < itemList.size(); i++) {
+            if(itemList[i].z == itemType){
+                if((spherePos.x >= itemList[i].x - 1 && spherePos.x <= itemList[i].x + 1) && (spherePos.z >= itemList[i].y - 1 && spherePos.z <= itemList[i].y + 1)){
+                    if(itemList[i].w == 1.0){
+                        itemIsGreen = 1.0;
+                        if(itemList[i].z != 4.0){
                             textFinishIndex = 3;
                         }
                     } else {
-                        isGreen = 0.0;
+                        itemIsGreen = 0.0;
+                    }
+                }
+            }
+        }
+    }
+
+    void itemTake (float itemType) {
+        for (int i = 0; i < itemList.size(); i++) {
+            if (itemList[i].z == itemType) {
+                if ((spherePos.x >= itemList[i].x - 1 && spherePos.x <= itemList[i].x + 1) && (spherePos.z >= itemList[i].y - 1 && spherePos.z <= itemList[i].y + 1)) {
+                    if (itemList[i].w == 0.0) {
+                        itemList[i].w = 1.0;
+                        itemIsGreen = 1.0;
+                        if (itemList[i].z == 1.0 || itemList[i].z == 2.0 || itemList[i].z == 3.0 || itemList[i].z == 6.0) {
+                            std::thread threadSoundEffect(playSound, "sounds/Item.wav", "others");
+                            threadSoundEffect.detach();
+                        }
                     }
                 }
             }
@@ -1139,7 +1113,7 @@ protected:
         UBOm_Sphere.nMat = glm::mat4(1.0f);
         DS_Sphere.map(currentImage, &UBOm_Sphere, 0);
 
-        UBOp_Sphere.isGreen = isGreen;
+        UBOp_Sphere.isGreen = itemIsGreen;
         DS_Sphere.map(currentImage, &UBOp_Sphere, 2);
 
         // Plane
@@ -1221,6 +1195,12 @@ protected:
             return false;
     }
 
+    void sphereStop() {
+        spherePosAccel = glm::vec3(0.0f);
+        sphereAccelUp = 0.0f;
+        sphereJump = 0.0f;
+    }
+
 
     void appManage() {
         if (appCurrent == MENU) {
@@ -1239,6 +1219,8 @@ public:
         levelStart = glm::vec3(6.0f, 0.0f, 10.0f);
         levelPathPrefix = "levels/menu/";
         levelName = "Labyball - Menu";
+        levelSoundtrack = "sounds/Level1.wav";
+
     }
 };
 
@@ -1250,7 +1232,7 @@ public:
         levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
         levelPathPrefix = "levels/level1/";
         levelName = "Labyball - Level 1";
-        mainSoundtrack = "sounds/Level1.wav";
+        levelSoundtrack = "sounds/Level1.wav";
     }
 };
 
@@ -1262,7 +1244,7 @@ public:
         levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
         levelPathPrefix = "levels/level2/";
         levelName = "Labyball - Level 2";
-        mainSoundtrack = "sounds/Level2.wav";
+        levelSoundtrack = "sounds/Level2.wav";
     }
 };
 
