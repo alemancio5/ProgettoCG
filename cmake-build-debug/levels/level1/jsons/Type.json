@@ -49,18 +49,6 @@
       "type": 3.0
     },
     {
-      "description": "Win #1",
-      "i": {
-        "start": 4,
-        "end": 6
-      },
-      "j": {
-        "start": 33,
-        "end": 35
-      },
-      "type": 4.0
-    },
-    {
       "description": "Iron #1",
       "i": {
         "start": 18,
@@ -95,6 +83,18 @@
         "end": 23
       },
       "type": 5.0
+    },
+    {
+      "description": "Win #1",
+      "i": {
+        "start": 4,
+        "end": 6
+      },
+      "j": {
+        "start": 33,
+        "end": 35
+      },
+      "type": 6.0
     }
   ]
 }

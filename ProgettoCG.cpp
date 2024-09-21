@@ -43,15 +43,19 @@ std::vector<SingleText> textMessage = {
     {2, {"", "E: SUPER SPEED", "",""}, 0, 0},
     {2, {"", "E: SUPER VIEW", "",""}, 0, 0},
     {2, {"", "E: SUPER LIGHT", "",""}, 0, 0},
+    {2, {"", "", "",""}, 0, 0},
     {2, {"", "E: WIN", "",""}, 0, 0},
+    {2, {"", "", "",""}, 0, 0},
+    {2, {"", "", "",""}, 0, 0},
+    {2, {"", "", "",""}, 0, 0},
+    {2, {"", "", "",""}, 0, 0},
     {2, {"", "E: LEVEL 1", "",""}, 0, 0},
     {2, {"", "E: LEVEL 2", "",""}, 0, 0}
 };
 std::vector<SingleText> textFinish = {
     {3, {"", "", "",""}, 0, 0},
     {3, {"", "", "YOU WIN",""}, 0, 0},
-    {3, {"", "", "GAME OVER",""}, 0, 0},
-    {3, {"", "", "GOT IT!",""}, 0, 0}
+    {3, {"", "", "GAME OVER",""}, 0, 0}
 };
 
 // UBO structs
@@ -152,6 +156,16 @@ struct WallVertex {
     glm::vec2 uv;
     glm::vec3 norm;
 };
+
+// Items types
+int const ITEM_CHECKPOINT = 1;
+int const ITEM_SUPER_SPEED = 2;
+int const ITEM_SUPER_VIEW = 3;
+int const ITEM_SUPER_LIGHT = 4;
+int const ITEM_IRON = 5;
+int const ITEM_WIN = 6;
+int const ITEM_LEVEL1 = 11;
+int const ITEM_LEVEL2 = 12;
 
 // App
 enum AppEnum {
@@ -866,61 +880,53 @@ protected:
             // E
             if (rotationInput.z == -1.0f && sphereOnGround()) {
                 // Checkpoint
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0f) {
-                    textFinishIndex = 3;
-                    RebuildPipeline();
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_CHECKPOINT) {
                     sphereCheckpoint = spherePos;
-                    itemTake(1.0);
+                    itemTaken(1.0);
                 }
                 // Super Speed
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0f) {
-                    textFinishIndex = 3;
-                    RebuildPipeline();
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_SUPER_SPEED) {
                     sphereAccel = sphereAccelSuper;
                     sphereAccelUp = sphereAccelUpSuper;
                     sphereJump = sphereJumpSuper;
-                    itemTake(2.0);
+                    itemTaken(2.0);
                 }
                 // Super View
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0f) {
-                    textFinishIndex = 3;
-                    RebuildPipeline();
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_SUPER_VIEW) {
                     viewDistance = viewDistanceSuper;
                     viewHeight = viewHeightSuper;
-                    itemTake(3.0);
+                    itemTaken(3.0);
+                }
+                // Super Light
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_SUPER_LIGHT) {
+                    ambientStrength = 0.5;
+                    lightStatus.x = 1.0;
+                    itemTaken(ITEM_SUPER_LIGHT);
                 }
                 // Win
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0f) {
-                    sphereStop();
-                    levelEnded = true;
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_WIN) {
                     textFinishIndex = 1;
                     RebuildPipeline();
-                    itemTake(4.0);
+                    levelEnded = true;
+                    sphereStop();
+                    itemTaken(ITEM_WIN);
                     std::thread threadSoundEffect(playSound, "sounds/Win.wav", "others");
                     threadSoundEffect.detach();
                 }
-                // Super Light
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 6.0f) {
-                    textFinishIndex = 3;
-                    RebuildPipeline();
-                    ambientStrength = 0.5;
-                    lightStatus.x = 1.0;
-                    itemTake(6.0);
-                }
                 // Level 1
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 11.0f) {
-                    levelEnded = true;
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_LEVEL1) {
                     itemIsGreen = 1 - itemIsGreen;
-                    soundStop.store(true);
+                    levelEnded = true;
                     appCurrent = LEVEL1;
+                    soundStop.store(true);
                     glfwSetWindowShouldClose(window, GL_TRUE);
                 }
                 // Level 2
-                if (levelType[(int) spherePos.x][(int) spherePos.z] == 12.0f) {
-                    levelEnded = true;
+                if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_LEVEL2) {
                     itemIsGreen = 1 - itemIsGreen;
-                    soundStop.store(true);
+                    levelEnded = true;
                     appCurrent = LEVEL2;
+                    soundStop.store(true);
                     glfwSetWindowShouldClose(window, GL_TRUE);
                 }
             }
@@ -1010,58 +1016,54 @@ protected:
 
             // Check the type of the item under the sphere
             itemOld = itemCur;
-            if (levelType[(int) spherePos.x][(int) spherePos.z] == 1.0 && sphereOnGround()) {
-                itemCur = 1;
-                textMessageIndex = 1;
-                itemTaken(1.0);
-            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 2.0 && sphereOnGround()) {
-                itemCur = 2;
-                textMessageIndex = 2;
-                itemTaken(2.0);
-            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 3.0 && sphereOnGround()) {
-                itemCur = 3;
-                textMessageIndex = 3;
-                itemTaken(3.0);
-            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 4.0 && sphereOnGround()) {
-                itemCur = 4;
-                textMessageIndex = 5;
-                itemTaken(4.0);
-            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 6.0 && sphereOnGround()) {
-                itemCur = 6;
-                textMessageIndex = 4;
-                itemTaken(6.0);
-            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 11.0 && sphereOnGround()) {
-                itemCur = 11;
-                textMessageIndex = 6;
-            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 12.0 && sphereOnGround()) {
-                itemCur = 12;
-                textMessageIndex = 7;
-            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == 5.0 && sphereOnGround()) {
-                if (sphereLives > 0) {
-                    itemCur = 5;
-                    spherePos = sphereCheckpoint;
-                    sphereLives--;
-                    std::thread threadSoundEffect(playSound, "sounds/Hit.wav", " ");
-                    threadSoundEffect.detach();
-                } else {
-                    textFinishIndex = 2;
-                }
+            if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_CHECKPOINT && sphereOnGround()) {
+                itemCur = ITEM_CHECKPOINT;
+                textMessageIndex = ITEM_CHECKPOINT;
+                itemUnder(ITEM_CHECKPOINT);
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_SUPER_SPEED && sphereOnGround()) {
+                itemCur = ITEM_SUPER_SPEED;
+                textMessageIndex = ITEM_SUPER_SPEED;
+                itemUnder(ITEM_SUPER_SPEED);
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_SUPER_VIEW && sphereOnGround()) {
+                itemCur = ITEM_SUPER_VIEW;
+                textMessageIndex = ITEM_SUPER_VIEW;
+                itemUnder(ITEM_SUPER_VIEW);
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_SUPER_LIGHT && sphereOnGround()) {
+                itemCur = ITEM_SUPER_LIGHT;
+                textMessageIndex = ITEM_SUPER_LIGHT;
+                itemUnder(ITEM_SUPER_LIGHT);
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_IRON && sphereOnGround()) {
+                itemCur = ITEM_IRON;
+                std::thread threadSoundEffect(playSound, "sounds/Hit.wav", " ");
+                threadSoundEffect.detach();
+                sphereLives--;
+                spherePos = sphereCheckpoint;
                 itemIsGreen = 0.0;
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_WIN && sphereOnGround()) {
+                itemCur = ITEM_WIN;
+                textMessageIndex = ITEM_WIN;
+                itemUnder(ITEM_WIN);
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_LEVEL1 && sphereOnGround()) {
+                itemCur = ITEM_LEVEL1;
+                textMessageIndex = ITEM_LEVEL1;
+            } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_LEVEL2 && sphereOnGround()) {
+                itemCur = ITEM_LEVEL2;
+                textMessageIndex = ITEM_LEVEL2;
             } else {
                 itemCur = 0;
                 textMessageIndex = 0;
-                if (sphereLives == 0.0){
-                    textFinishIndex = 2;
-                } else {
-                    textFinishIndex = 0;
-                }
                 itemIsGreen = 0.0;
             }
+
+            // Check if the sphere is out of lives
             if (sphereLives == 0) {
-                sphereStop();
-                levelEnded = true;
                 textFinishIndex = 2;
+                RebuildPipeline();
+                levelEnded = true;
+                sphereStop();
             }
+
+            // Rebuild pipeline if the item under the sphere has changed
             if (itemCur != itemOld) {
                 RebuildPipeline();
             }
@@ -1071,15 +1073,12 @@ protected:
         }
     }
 
-    void itemTaken (float itemType) {
+    void itemUnder (float itemType) {
         for(int i = 0; i < itemList.size(); i++) {
-            if(itemList[i].z == itemType){
-                if((spherePos.x >= itemList[i].x - 1 && spherePos.x <= itemList[i].x + 1) && (spherePos.z >= itemList[i].y - 1 && spherePos.z <= itemList[i].y + 1)){
-                    if(itemList[i].w == 1.0){
+            if (itemList[i].z == itemType) {
+                if ((spherePos.x >= itemList[i].x - 1 && spherePos.x <= itemList[i].x + 1) && (spherePos.z >= itemList[i].y - 1 && spherePos.z <= itemList[i].y + 1)){
+                    if (itemList[i].w == 1.0) {
                         itemIsGreen = 1.0;
-                        if(itemList[i].z != 4.0){
-                            textFinishIndex = 3;
-                        }
                     } else {
                         itemIsGreen = 0.0;
                     }
@@ -1088,14 +1087,14 @@ protected:
         }
     }
 
-    void itemTake (float itemType) {
+    void itemTaken (float itemType) {
         for (int i = 0; i < itemList.size(); i++) {
             if (itemList[i].z == itemType) {
                 if ((spherePos.x >= itemList[i].x - 1 && spherePos.x <= itemList[i].x + 1) && (spherePos.z >= itemList[i].y - 1 && spherePos.z <= itemList[i].y + 1)) {
                     if (itemList[i].w == 0.0) {
                         itemList[i].w = 1.0;
                         itemIsGreen = 1.0;
-                        if (itemList[i].z == 1.0 || itemList[i].z == 2.0 || itemList[i].z == 3.0 || itemList[i].z == 6.0) {
+                        if (itemList[i].z == ITEM_CHECKPOINT || itemList[i].z == ITEM_SUPER_SPEED || itemList[i].z == ITEM_SUPER_VIEW || itemList[i].z == ITEM_SUPER_LIGHT) {
                             std::thread threadSoundEffect(playSound, "sounds/Item.wav", "others");
                             threadSoundEffect.detach();
                         }
