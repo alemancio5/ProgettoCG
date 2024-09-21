@@ -863,7 +863,7 @@ protected:
             sphereJumping = true;
             if (!soundDone.load() && sphereJump > 0.0) {
                 soundDone.store(true);
-                std::thread threadSoundEffect(playSound, "sound_effects/Jump.wav", " ");
+                std::thread threadSoundEffect(playSound, "sounds/Jump.wav", " ");
                 threadSoundEffect.detach();
             }
         }
@@ -909,7 +909,7 @@ protected:
                     std::cout << "Tempo impiegato: " << tempo_trascorso.count() << " secondi" << std::endl;
 
                     soundDone.store(true);
-                    std::thread threadSoundEffect(playSound, "sound_effects/Win.wav", " ");
+                    std::thread threadSoundEffect(playSound, "sounds/Win.wav", " ");
                     threadSoundEffect.detach();
                 }
 
@@ -950,7 +950,7 @@ protected:
                         if(typeTaken[i].z == 2.0 || typeTaken[i].z == 3.0 || typeTaken[i].z == 6.0) {
                             if (!soundDone.load()) {
                                 soundDone.store(true);
-                                std::thread threadSoundEffect(playSound, "sound_effects/PowerUp.wav", " ");
+                                std::thread threadSoundEffect(playSound, "sounds/Item.wav", " ");
                                 threadSoundEffect.detach();
                             }
                         }
@@ -1097,7 +1097,7 @@ protected:
                     textFinishIndex = 2;
                     RebuildPipeline();
                     soundDone.store(true);
-                    std::thread threadSoundEffect(playSound, "sound_effects/GameOver.wav", " ");
+                    std::thread threadSoundEffect(playSound, "sounds/Over.wav", " ");
                     threadSoundEffect.detach();
                 }
                 sphereAccel = 0.0f;
@@ -1250,7 +1250,7 @@ public:
         levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
         levelPathPrefix = "levels/level1/";
         levelName = "Labyball - Level 1";
-        mainSoundtrack = "sound_effects/Level1.wav";
+        mainSoundtrack = "sounds/Level1.wav";
     }
 };
 
@@ -1262,7 +1262,7 @@ public:
         levelStart = glm::vec3(5.0f, 0.0f, 5.0f);
         levelPathPrefix = "levels/level2/";
         levelName = "Labyball - Level 2";
-        mainSoundtrack = "sound_effects/Level2.wav";
+        mainSoundtrack = "sounds/Level2.wav";
     }
 };
 
