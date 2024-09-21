@@ -176,6 +176,8 @@ enum AppEnum {
 bool appClosing = false;
 AppEnum appCurrent = MENU;
 
+
+
 class Level : public BaseProject {
 protected:
 
@@ -197,10 +199,6 @@ protected:
     std::string levelPathPrefix = "";
     std::string levelPathHeight = "jsons/Height.json";
     std::string levelPathType = "jsons/Type.json";
-
-    std::chrono::steady_clock::time_point levelStartTime;
-    bool soundtrack = true;
-
 
     // Sphere
     DescriptorSetLayout DSL_Sphere;
@@ -260,10 +258,12 @@ protected:
     ItemMUBO UBOm_Item{};
     int itemCur = 0;
     int itemOld = 0;
+    float itemIsGreen = 0.0;
     std::string itemPathVert = "shaders/ItemVert.spv";
     std::string itemPathFrag = "shaders/ItemFrag.spv";
     std::string itemPathModel = "models/Item.obj";
     std::string itemPathTexture = "textures/Item.jpg";
+    std::vector<glm::vec4> itemList;
 
     // Step
     DescriptorSetLayout DSL_Step;
@@ -363,9 +363,6 @@ protected:
     float cosIn = glm::cos(0.1f);
     float cosOut = glm::cos(0.2f);
 
-    // Shpere Shader for Items
-    float itemIsGreen = 0.0;
-    std::vector<glm::vec4> itemList;
 
     void setWindowParameters() override {
         windowWidth = 800;
@@ -541,8 +538,6 @@ protected:
 
 
     void levelInit() {
-        levelStartTime = std::chrono::steady_clock::now();
-
         // Height initialization
         std::ifstream heightJsonFile(levelPathPrefix + levelPathHeight);
         nlohmann::json heightJson;
@@ -785,6 +780,7 @@ protected:
         DS_Wall.bind(commandBuffer, P_Wall, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Wall.indices.size()), 1, 0, 0, 0);
     }
+
 
     void updateUniformBuffer(uint32_t currentImage) override {
         // Debounce
@@ -1073,6 +1069,7 @@ protected:
         }
     }
 
+
     void itemUnder (float itemType) {
         for(int i = 0; i < itemList.size(); i++) {
             if (itemList[i].z == itemType) {
@@ -1086,6 +1083,7 @@ protected:
             }
         }
     }
+
 
     void itemTaken (float itemType) {
         for (int i = 0; i < itemList.size(); i++) {
@@ -1103,6 +1101,7 @@ protected:
             }
         }
     }
+
 
     void updateUBO(uint32_t currentImage) {
         // Sphere
@@ -1224,7 +1223,6 @@ public:
 };
 
 
-
 class Level1 : public Level {
 public:
     Level1() {
@@ -1236,7 +1234,6 @@ public:
 };
 
 
-
 class Level2 : public Level {
 public:
     Level2() {
@@ -1246,6 +1243,7 @@ public:
         levelSoundtrack = "sounds/Level2.wav";
     }
 };
+
 
 int main(int argc, char* argv[]) {
     Level* app;
