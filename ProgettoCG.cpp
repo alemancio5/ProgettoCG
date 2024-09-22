@@ -8,6 +8,7 @@
 
 // Sound
 std::atomic<bool> soundStop(false);
+std::atomic<bool> soundDone(true);
 void playSound(const std::string& file, std::string type) {
     // Load the sound
     sf::SoundBuffer buffer;
@@ -22,11 +23,12 @@ void playSound(const std::string& file, std::string type) {
     while (sound.getStatus() == sf::Sound::Playing) {
         if (soundStop.load() && type == "soundtrack") {
             sound.stop();
+            soundStop.store(false);
             break;
         }
         sf::sleep(sf::milliseconds(10));
     }
-    soundStop.store(false);
+    if(!soundStop.load() && type == "soundtrack") soundDone.store(true);
 }
 
 // Text
@@ -104,11 +106,13 @@ struct ShadersPUBO {
     alignas(16) glm::vec3 lightPos;
     alignas(16) glm::vec4 lightColor;
     alignas(16) glm::vec4 lightStatus;
+    alignas(16) glm::vec3 spotLightPos;
     alignas(4) float ambientStrength;
     alignas(4) float specularStrength;
     alignas(4) float shininess;
     alignas(4) float cosIn;
     alignas(4) float cosOut;
+    alignas(4) float isWin;
 };
 
 struct SpherePUBO {
@@ -354,14 +358,15 @@ protected:
     // Shaders
     ShadersPUBO UBOp_Shaders;
     glm::vec4 lightStatus = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
-    glm::vec3 LCol = glm::vec3(1.f, 1.f, 1.f);
-    glm::vec3 LAmb = glm::vec3(0.1f,0.1f, 0.1f);
-    float LInt = 0.5f;
+    glm::vec3 LCol;
+    glm::vec3 spotPos;
+    float LInt;
     float ambientStrength = 10.0f;
     float specularStrength = 0.1f;
     float shininess = 10.0f;
     float cosIn = glm::cos(0.1f);
     float cosOut = glm::cos(0.2f);
+    float isWin = 0.0;
 
 
     void setWindowParameters() override {
@@ -380,10 +385,6 @@ protected:
 
 
     void localInit() override {
-        // Sound
-        std::thread threadMainSoundtrack(playSound, levelSoundtrack, "soundtrack");
-        threadMainSoundtrack.detach();
-
         // Text
         textLivesBanner.init(this, &textLives);
         textMessageBanner.init(this, &textMessage);
@@ -783,9 +784,12 @@ protected:
 
 
     void updateUniformBuffer(uint32_t currentImage) override {
-        // Debounce
-        static bool debounce = false;
-        static int debounceCur = 0;
+        // Sound
+        if(soundDone.load() == true){
+            std::thread threadMainSoundtrack(playSound, levelSoundtrack, "soundtrack");
+            threadMainSoundtrack.detach();
+            soundDone.store(false);
+        }
 
         // Get inputs
         float deltaTime;
@@ -897,10 +901,12 @@ protected:
                 if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_SUPER_LIGHT) {
                     ambientStrength = 0.5;
                     lightStatus.x = 1.0;
+                    LCol = glm::vec3(1.0, 1.0, 1.0);
                     itemTaken(ITEM_SUPER_LIGHT);
                 }
                 // Win
                 if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_WIN) {
+                    isWin = 1.0;
                     textFinishIndex = 1;
                     RebuildPipeline();
                     levelEnded = true;
@@ -1030,11 +1036,14 @@ protected:
                 itemUnder(ITEM_SUPER_LIGHT);
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_IRON && sphereOnGround()) {
                 itemCur = ITEM_IRON;
-                std::thread threadSoundEffect(playSound, "sounds/Hit.wav", " ");
-                threadSoundEffect.detach();
-                sphereLives--;
-                spherePos = sphereCheckpoint;
-                itemIsGreen = 0.0;
+                // Need to check lives otherwise it can stop the program
+                if(sphereLives > 0.0) {
+                    std::thread threadSoundEffect(playSound, "sounds/Hit.wav", " ");
+                    threadSoundEffect.detach();
+                    sphereLives--;
+                    spherePos = sphereCheckpoint;
+                    itemIsGreen = 0.0;
+                }
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_WIN && sphereOnGround()) {
                 itemCur = ITEM_WIN;
                 textMessageIndex = ITEM_WIN;
@@ -1166,6 +1175,8 @@ protected:
         UBOp_Shaders.lightStatus = lightStatus;
         UBOp_Shaders.cosIn = cosIn;
         UBOp_Shaders.cosOut = cosOut;
+        UBOp_Shaders.isWin = isWin;
+        UBOp_Shaders.spotLightPos = spotPos;
         DS_Plane.map(currentImage, &UBOp_Shaders, 2);
         DS_Border.map(currentImage, &UBOp_Shaders, 2);
         DS_Wall.map(currentImage, &UBOp_Shaders, 2);
@@ -1219,6 +1230,9 @@ public:
         levelName = "Labyball - Menu";
         levelSoundtrack = "sounds/Menu.wav";
         sphereLives = 4;
+        LCol = glm::vec3(1.f, 0.51f, 0.3f);
+        LInt = 0.5;
+        spotPos = glm::vec3(25.0, 0.0, 10.0);
     }
 };
 
@@ -1230,6 +1244,9 @@ public:
         levelPathPrefix = "levels/level1/";
         levelName = "Labyball - Level 1";
         levelSoundtrack = "sounds/Level1.wav";
+        LCol = glm::vec3(0.4f, 0.5f, 1.f);
+        LInt = 1.0;
+        spotPos = glm::vec3(5.5, 0.0, 34.5);
     }
 };
 
@@ -1241,6 +1258,9 @@ public:
         levelPathPrefix = "levels/level2/";
         levelName = "Labyball - Level 2";
         levelSoundtrack = "sounds/Level2.wav";
+        LCol = glm::vec3(0.5f, 1.f, 0.5f);
+        LInt = 0.5;
+        spotPos = glm::vec3(91.0, 0.0, 91.0);
     }
 };
 
