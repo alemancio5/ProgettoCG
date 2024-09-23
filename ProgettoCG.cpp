@@ -1232,7 +1232,7 @@ public:
         sphereLives = 4;
         LCol = glm::vec3(1.f, 0.51f, 0.3f);
         LInt = 0.5;
-        spotPos = glm::vec3(25.0, 0.0, 10.0);
+        spotPos = glm::vec3(50.0, 0.0, 10.0);
     }
 };
 
@@ -1258,7 +1258,7 @@ public:
         levelPathPrefix = "levels/level2/";
         levelName = "Labyball - Level 2";
         levelSoundtrack = "sounds/Level2.wav";
-        LCol = glm::vec3(0.5f, 1.f, 0.5f);
+        LCol = glm::vec3(0.7f, 1.f, 0.9f);
         LInt = 0.5;
         spotPos = glm::vec3(91.0, 0.0, 91.0);
     }
