@@ -11,6 +11,7 @@ layout(binding = 2) uniform LightsDiffusion {
     vec3 lightPos;
     vec4 lightColor;
     vec4 lightStatus;
+    vec3 winSpotLightPos;
 
     float ambientStrength;
     float specularStrength;
@@ -18,6 +19,8 @@ layout(binding = 2) uniform LightsDiffusion {
 
     float cosIn;
     float cosOut;
+
+    float isWin;
 } LDubo;
 
 layout(location = 0) out vec4 outColor;
@@ -54,6 +57,12 @@ void main() {
                         clamp( ( dot(normalize(LDubo.lightPos - fragPos), lightDir) - LDubo.cosOut ) / (LDubo.cosIn - LDubo.cosOut), 0.0, 1.0 );
     result += (ambient + diffuse + specular) * spotLight * texColor * LDubo.lightStatus.z;
 
+    // LUCE SPOT NEW
+    vec3 ligthWin = LDubo.isWin == 1.0 ? vec3(1.0 - LDubo.lightColor.r, 1.0 - LDubo.lightColor.g, 1.0 - LDubo.lightColor.b) : vec3(LDubo.lightColor);
+    vec3 spotLightNew = ligthWin *
+        pow((0.25 / length(LDubo.winSpotLightPos - fragPos)), 2.0) *
+        clamp( ( dot(normalize(LDubo.winSpotLightPos - fragPos), normalize(LDubo.winSpotLightPos - fragPos)) - 0.3 ) / (0.5 - 0.3), 0.0, 1.0 );
+    result += (ambient + diffuse + specular) * spotLightNew * ligthWin * LDubo.lightStatus.w;
 
     outColor = vec4(result, 1.0);
 }

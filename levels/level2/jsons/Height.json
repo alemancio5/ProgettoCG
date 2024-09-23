@@ -479,6 +479,18 @@
         "end": 98
       },
       "height": 2.0
+    },
+    {
+      "description": "Step #20",
+      "i": {
+        "start": 92,
+        "end": 94
+      },
+      "j": {
+        "start": 78,
+        "end": 80
+      },
+      "height": 2.0
     }
   ]
 }

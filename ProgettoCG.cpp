@@ -28,7 +28,8 @@ void playSound(const std::string& file, std::string type) {
         }
         sf::sleep(sf::milliseconds(10));
     }
-    if(!soundStop.load() && type == "soundtrack") soundDone.store(true);
+    if (!soundStop.load() && type == "soundtrack")
+        soundDone.store(true);
 }
 
 // Text
@@ -65,6 +66,9 @@ struct SphereMUBO {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
+};
+struct SpherePUBO {
+    alignas(4) float isGreen;
 };
 struct PlaneMUBO {
     alignas(16) glm::mat4 mvpMat;
@@ -114,11 +118,6 @@ struct ShadersPUBO {
     alignas(4) float cosOut;
     alignas(4) float isWin;
 };
-
-struct SpherePUBO {
-    alignas(4) float isGreen;
-};
-
 
 // Vertexes structs
 struct SphereVertex {
@@ -184,7 +183,6 @@ AppEnum appCurrent = MENU;
 
 class Level : public BaseProject {
 protected:
-
     // Text
     TextMaker textLivesBanner;
     TextMaker textMessageBanner;
@@ -263,8 +261,8 @@ protected:
     int itemCur = 0;
     int itemOld = 0;
     float itemIsGreen = 0.0;
-    std::string itemPathVert = "shaders/ItemVert.spv";
-    std::string itemPathFrag = "shaders/ItemFrag.spv";
+    std::string itemPathVert = "shaders/EmissionVert.spv";
+    std::string itemPathFrag = "shaders/EmissionFrag.spv";
     std::string itemPathModel = "models/Item.obj";
     std::string itemPathTexture = "textures/Item.jpg";
     std::vector<glm::vec4> itemList;
@@ -303,8 +301,8 @@ protected:
     Texture T_Decoration{};
     DescriptorSet DS_Decoration;
     DecorationMUBO UBOm_Decoration{};
-    std::string decorationPathVert = "shaders/NormalVert.spv";
-    std::string decorationPathFrag = "shaders/NormalFrag.spv";
+    std::string decorationPathVert = "shaders/EmissionVert.spv";
+    std::string decorationPathFrag = "shaders/EmissionFrag.spv";
     std::string decorationPathModel = "models/Decoration.obj";
     std::string decorationPathTexture = "textures/Decoration.jpg";
 
@@ -785,7 +783,7 @@ protected:
 
     void updateUniformBuffer(uint32_t currentImage) override {
         // Sound
-        if(soundDone.load() == true){
+        if (soundDone.load()) {
             std::thread threadMainSoundtrack(playSound, levelSoundtrack, "soundtrack");
             threadMainSoundtrack.detach();
             soundDone.store(false);
@@ -1036,12 +1034,11 @@ protected:
                 itemUnder(ITEM_SUPER_LIGHT);
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_IRON && sphereOnGround()) {
                 itemCur = ITEM_IRON;
-                // Need to check lives otherwise it can stop the program
-                if(sphereLives > 0.0) {
-                    std::thread threadSoundEffect(playSound, "sounds/Hit.wav", " ");
-                    threadSoundEffect.detach();
+                std::thread threadSoundEffect(playSound, "sounds/Hit.wav", " ");
+                threadSoundEffect.detach();
+                spherePos = sphereCheckpoint;
+                if (sphereLives > 0.0) {
                     sphereLives--;
-                    spherePos = sphereCheckpoint;
                     itemIsGreen = 0.0;
                 }
             } else if (levelType[(int) spherePos.x][(int) spherePos.z] == ITEM_WIN && sphereOnGround()) {
@@ -1260,7 +1257,7 @@ public:
         levelSoundtrack = "sounds/Level2.wav";
         LCol = glm::vec3(0.7f, 1.f, 0.9f);
         LInt = 0.5;
-        spotPos = glm::vec3(91.0, 0.0, 91.0);
+        spotPos = glm::vec3(5.0, 0.0, 15.0);
     }
 };
 

@@ -39,24 +39,24 @@
     {
       "description": "Super Speed #1",
       "i": {
-        "start": 66,
-        "end": 68
+        "start": 94,
+        "end": 96
       },
       "j": {
-        "start": 14,
-        "end": 16
+        "start": 74,
+        "end": 76
       },
       "type": 2.0
     },
     {
       "description": "Super View #1",
       "i": {
-        "start": 94,
-        "end": 96
+        "start": 66,
+        "end": 68
       },
       "j": {
-        "start": 76,
-        "end": 78
+        "start": 14,
+        "end": 16
       },
       "type": 3.0
     },
@@ -339,12 +339,12 @@
     {
       "description": "Win #1",
       "i": {
-        "start": 90,
-        "end": 92
+        "start": 4,
+        "end": 6
       },
       "j": {
-        "start": 90,
-        "end": 92
+        "start": 14,
+        "end": 16
       },
       "type": 6.0
     }
