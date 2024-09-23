@@ -261,8 +261,8 @@ protected:
     int itemCur = 0;
     int itemOld = 0;
     float itemIsGreen = 0.0;
-    std::string itemPathVert = "shaders/EmissionVert.spv";
-    std::string itemPathFrag = "shaders/EmissionFrag.spv";
+    std::string itemPathVert = "shaders/ItemVert.spv";
+    std::string itemPathFrag = "shaders/ItemFrag.spv";
     std::string itemPathModel = "models/Item.obj";
     std::string itemPathTexture = "textures/Item.jpg";
     std::vector<glm::vec4> itemList;
@@ -301,8 +301,8 @@ protected:
     Texture T_Decoration{};
     DescriptorSet DS_Decoration;
     DecorationMUBO UBOm_Decoration{};
-    std::string decorationPathVert = "shaders/EmissionVert.spv";
-    std::string decorationPathFrag = "shaders/EmissionFrag.spv";
+    std::string decorationPathVert = "shaders/DecorationVert.spv";
+    std::string decorationPathFrag = "shaders/DecorationFrag.spv";
     std::string decorationPathModel = "models/Decoration.obj";
     std::string decorationPathTexture = "textures/Decoration.jpg";
 
