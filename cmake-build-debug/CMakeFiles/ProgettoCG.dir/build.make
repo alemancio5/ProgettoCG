@@ -73,15 +73,15 @@ CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o: CMakeFiles/ProgettoCG.dir/flags.make
 CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o: /Users/alessandromancini/Ale/Coding/Progetti\ CLion/ProgettoCG/ProgettoCG.cpp
 CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o: CMakeFiles/ProgettoCG.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/cmake-build-debug/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o -MF CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o.d -o CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o -c "/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/ProgettoCG.cpp"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o -MF CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o.d -o CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o -c "/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/ProgettoCG.cpp"
 
 CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.i"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/ProgettoCG.cpp" > CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.i
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/ProgettoCG.cpp" > CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.i
 
 CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.s"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/ProgettoCG.cpp" -o CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.s
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/alessandromancini/Ale/Coding/Progetti CLion/ProgettoCG/ProgettoCG.cpp" -o CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.s
 
 # Object files for target ProgettoCG
 ProgettoCG_OBJECTS = \
