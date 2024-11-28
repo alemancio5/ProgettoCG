@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.24)
 
 project(ProgettoCG)
 
-set($ENV{VULKAN_SDK} "/Library/CLion/VulkanSDK/1.3.275.0/macOS")
-set(GLFW "/Library/CLion/VulkanSDK/libs/glfw-3.4.bin.MACOS")
-set(GLM "/Library/CLion/VulkanSDK/libs/glm")
+set($ENV{VULKAN_SDK} "/Library/Added/Vulkan/1.3.275.0/macOS")
+set(GLFW "/Library/Added/Vulkan/libs/glfw-3.4.bin.MACOS")
+set(GLM "/Library/Added/Vulkan/libs/glm")
 set(MAIN ProgettoCG.cpp)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo")
@@ -32,4 +32,3 @@ endforeach()
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/modules DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/textures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-

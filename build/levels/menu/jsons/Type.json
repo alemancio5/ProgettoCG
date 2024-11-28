@@ -1,0 +1,40 @@
+{
+  "loops": [
+    {
+      "description": "Ground",
+      "i": {
+        "start": 0,
+        "end": 20
+      },
+      "j": {
+        "start": 0,
+        "end": 20
+      },
+      "type": 0.0
+    },
+    {
+      "description": "Level #1",
+      "i": {
+        "start": 14,
+        "end": 16
+      },
+      "j": {
+        "start": 4,
+        "end": 6
+      },
+      "type": 11.0
+    },
+    {
+      "description": "Level #2",
+      "i": {
+        "start": 14,
+        "end": 16
+      },
+      "j": {
+        "start": 9,
+        "end": 11
+      },
+      "type": 12.0
+    }
+  ]
+}

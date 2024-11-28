@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/Users/alessandromancini/Ale/Coding/Progetti Visual Studio Code/ProgettoCG/build",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/usr/local/include -I/Library/Added/Vulkan/libs/glfw-3.4.bin.MACOS/include -I/Library/Added/Vulkan/libs/glm -I\"/Users/alessandromancini/Ale/Coding/Progetti Visual Studio Code/ProgettoCG/headers\" -isystem /opt/homebrew/include -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo -g -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -o CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o -c \"/Users/alessandromancini/Ale/Coding/Progetti Visual Studio Code/ProgettoCG/ProgettoCG.cpp\"",
+  "file": "/Users/alessandromancini/Ale/Coding/Progetti Visual Studio Code/ProgettoCG/ProgettoCG.cpp",
+  "output": "CMakeFiles/ProgettoCG.dir/ProgettoCG.cpp.o"
+}
+]
